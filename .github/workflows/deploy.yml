@@ -33,7 +33,7 @@ jobs:
     - name: 🚀 Deploy to Netlify
       uses: nwtgck/actions-netlify@v3.0.0
       with:
-        publish-dir: './.next'
+        publish-dir: './out'
         production-branch: main
         github-token: ${{ secrets.GITHUB_TOKEN }}
         deploy-message: "🌌 Exonov Quantum Auto-Deploy from GitHub Actions"
