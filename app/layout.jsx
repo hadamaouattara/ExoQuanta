@@ -1,27 +1,54 @@
 import '../styles/globals.css';
-import { Footer } from '../components/footer';
-import { Header } from '../components/header';
 
 export const metadata = {
     title: {
-        template: '%s | Netlify',
-        default: 'Netlify Starter'
-    }
+        template: '%s | Exonov Quantum',
+        default: 'Exonov Quantum - Plateforme de Simulation Quantique Avancée'
+    },
+    description: 'Plateforme révolutionnaire de simulation quantique. Explorez les mystères de la physique quantique avec des outils de pointe et une IA intégrée.',
+    keywords: ['quantum computing', 'simulation quantique', 'physique quantique', 'exonov', 'quantum algorithms', 'qubits'],
+    authors: [{ name: 'Exonov Quantum Team' }],
+    creator: 'Exonov Quantum',
+    publisher: 'Exonov Quantum',
+    robots: 'index, follow',
+    openGraph: {
+        title: 'Exonov Quantum - Simulation Quantique Avancée',
+        description: 'Plateforme révolutionnaire de simulation quantique avec IA intégrée',
+        type: 'website',
+        locale: 'fr_FR',
+        siteName: 'Exonov Quantum'
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Exonov Quantum - Simulation Quantique Avancée',
+        description: 'Plateforme révolutionnaire de simulation quantique avec IA intégrée'
+    },
+    viewport: 'width=device-width, initial-scale=1',
+    themeColor: '#7c3aed'
 };
 
 export default function RootLayout({ children }) {
     return (
-        <html lang="en">
+        <html lang="fr">
             <head>
-                <link rel="icon" href="/favicon.svg" sizes="any" />
+                <link rel="icon" href="/quantum-favicon.svg" sizes="any" />
+                <link rel="preconnect" href="https://fonts.googleapis.com" />
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+                <link 
+                    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" 
+                    rel="stylesheet" 
+                />
             </head>
-            <body className="antialiased text-white bg-blue-900">
-                <div className="flex flex-col min-h-screen px-6 bg-noise sm:px-12">
-                    <div className="flex flex-col w-full max-w-5xl mx-auto grow">
-                        <Header />
-                        <main className="grow">{children}</main>
-                        <Footer />
-                    </div>
+            <body className="antialiased text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-inter">
+                <div className="min-h-screen">
+                    <main className="w-full">{children}</main>
+                </div>
+                
+                {/* Quantum Background Effects */}
+                <div className="fixed inset-0 pointer-events-none z-0">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(147,51,234,0.1),transparent_50%)]"></div>
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(139,92,246,0.1),transparent_50%)]"></div>
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(168,85,247,0.1),transparent_50%)]"></div>
                 </div>
             </body>
         </html>
