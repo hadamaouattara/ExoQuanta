@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 export default function WorkflowDashboard() {
@@ -15,18 +15,8 @@ export default function WorkflowDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [isDemoMode, setIsDemoMode] = useState(false);
 
-    // Charger les données depuis les API
-    useEffect(() => {
-        loadDashboardData();
-        
-        // Actualiser toutes les 30 secondes
-        const interval = setInterval(loadDashboardData, 30000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const loadDashboardData = async () => {
+    const loadDashboardData = useCallback(async () => {
         try {
-            // Charger les workflows
             const workflowsResponse = await fetch('/api/workflows');
             const workflowsData = await workflowsResponse.json();
             
@@ -36,7 +26,6 @@ export default function WorkflowDashboard() {
             
             setWorkflows(workflowsData.workflows || []);
 
-            // Charger les statistiques d'exécution
             const executionsResponse = await fetch('/api/executions');
             const executionsData = await executionsResponse.json();
             
@@ -49,7 +38,14 @@ export default function WorkflowDashboard() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [stats]);
+
+    useEffect(() => {
+        loadDashboardData();
+        
+        const interval = setInterval(loadDashboardData, 30000);
+        return () => clearInterval(interval);
+    }, [loadDashboardData]);
 
     const triggerWorkflow = async (workflowId, workflowName) => {
         try {
@@ -68,7 +64,6 @@ export default function WorkflowDashboard() {
             
             if (result.success) {
                 alert(`✅ Workflow "${workflowName}" déclenché avec succès !`);
-                // Recharger les données
                 loadDashboardData();
             } else {
                 alert(`⚠️ ${result.error || 'Erreur lors du déclenchement'}`);
@@ -112,7 +107,6 @@ export default function WorkflowDashboard() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-            {/* Header */}
             <header className="bg-black/50 backdrop-blur-lg border-b border-purple-500/30 sticky top-0 z-50">
                 <div className="container mx-auto px-6 py-4">
                     <div className="flex items-center justify-between">
@@ -140,7 +134,6 @@ export default function WorkflowDashboard() {
             </header>
 
             <div className="container mx-auto px-6 py-12 relative z-10">
-                {/* Dashboard Title */}
                 <div className="mb-12 text-center">
                     <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                         Quantum Workflows Dashboard
@@ -155,7 +148,6 @@ export default function WorkflowDashboard() {
                     )}
                 </div>
 
-                {/* Stats Cards */}
                 <div className="grid md:grid-cols-4 gap-6 mb-12">
                     <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6">
                         <div className="text-purple-400 text-sm font-semibold mb-2">EXÉCUTIONS PROD.</div>
@@ -170,7 +162,7 @@ export default function WorkflowDashboard() {
                     </div>
                     
                     <div className="bg-black/30 backdrop-blur-lg border border-orange-500/50 rounded-xl p-6">
-                        <div className="text-orange-400 text-sm font-semibold mb-2">TAUX D'ÉCHEC</div>
+                        <div className="text-orange-400 text-sm font-semibold mb-2">TAUX D&apos;ÉCHEC</div>
                         <div className="text-3xl font-bold text-orange-400 mb-1">{stats.failureRate}%</div>
                         <div className="text-orange-300 text-sm">Configuration requise</div>
                     </div>
@@ -182,7 +174,6 @@ export default function WorkflowDashboard() {
                     </div>
                 </div>
 
-                {/* Problem Alert */}
                 {stats.failureRate > 50 && (
                     <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-6 mb-8">
                         <div className="flex items-center space-x-4">
@@ -192,7 +183,7 @@ export default function WorkflowDashboard() {
                                     Problème détecté dans les workflows
                                 </h3>
                                 <p className="text-red-200 mb-4">
-                                    Taux d'échec élevé ({stats.failureRate}%) - Vérifiez la configuration des credentials
+                                    Taux d&apos;échec élevé ({stats.failureRate}%) - Vérifiez la configuration des credentials
                                 </p>
                                 <button 
                                     onClick={() => window.open('https://docs.n8n.io/credentials/', '_blank')}
@@ -205,7 +196,6 @@ export default function WorkflowDashboard() {
                     </div>
                 )}
 
-                {/* Recent Executions */}
                 <div className="mb-8">
                     <h2 className="text-3xl font-bold mb-6 text-purple-300">
                         Exécutions Récentes
@@ -244,7 +234,6 @@ export default function WorkflowDashboard() {
                     </div>
                 </div>
 
-                {/* Workflows Grid */}
                 <div className="mb-8">
                     <h2 className="text-3xl font-bold mb-6 text-purple-300">
                         Workflows ({workflows.filter(w => w.active).length} actifs / {workflows.length} total)
@@ -304,7 +293,6 @@ export default function WorkflowDashboard() {
                     )}
                 </div>
 
-                {/* Connection Info */}
                 <div className="bg-black/30 backdrop-blur-lg border border-cyan-500/50 rounded-xl p-6">
                     <div className="flex items-center space-x-4">
                         <div className="text-cyan-400 text-2xl">🔗</div>
@@ -314,7 +302,7 @@ export default function WorkflowDashboard() {
                             </h3>
                             <p className="text-cyan-200 mb-4">
                                 {isDemoMode 
-                                    ? "Mode démonstration actif. Configurez les variables d'environnement pour connecter votre instance n8n."
+                                    ? "Mode démonstration actif. Configurez les variables d&apos;environnement pour connecter votre instance n8n."
                                     : "Connexion établie avec votre instance n8n. Dashboard temps réel actif."
                                 }
                             </p>
