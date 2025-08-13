@@ -23,68 +23,41 @@ export default function QuantumSimulation() {
         setIsRunning(true);
         setResults([]);
         
-        // Simuler un appel au workflow n8n de simulation quantique
-        try {
-            const response = await fetch('/api/workflows', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    workflowId: 'quantum-simulation',
-                    action: 'trigger',
-                    parameters: {
-                        qubits,
-                        algorithm,
-                        timestamp: new Date().toISOString()
-                    }
-                })
-            });
-
-            // Simulation des résultats quantiques
-            setTimeout(() => {
-                const simulatedResults = [];
-                const numStates = Math.pow(2, qubits);
-                
-                for (let i = 0; i < numStates; i++) {
-                    const probability = algorithm === 'grover' 
-                        ? (i === Math.floor(numStates/2) ? 0.8 : 0.2/(numStates-1))
-                        : Math.random();
-                    
-                    simulatedResults.push({
-                        state: `|${i.toString(2).padStart(qubits, '0')}⟩`,
-                        probability: probability,
-                        amplitude: {
-                            real: (Math.random() - 0.5) * 2,
-                            imaginary: (Math.random() - 0.5) * 2
-                        },
-                        phase: Math.random() * 2 * Math.PI
-                    });
-                }
-                
-                // Normaliser les probabilités
-                const total = simulatedResults.reduce((sum, r) => sum + r.probability, 0);
-                simulatedResults.forEach(r => r.probability = r.probability / total);
-                
-                const sortedResults = simulatedResults.sort((a, b) => b.probability - a.probability);
-                setResults(sortedResults);
-                
-                // Ajouter à l'historique
-                const historyEntry = {
-                    timestamp: new Date(),
-                    algorithm,
-                    qubits,
-                    results: sortedResults.slice(0, 3) // Top 3
-                };
-                setSimulationHistory(prev => [historyEntry, ...prev.slice(0, 4)]);
-                
-                setIsRunning(false);
-            }, 2000 + Math.random() * 2000); // 2-4 secondes
+        setTimeout(() => {
+            const simulatedResults = [];
+            const numStates = Math.pow(2, qubits);
             
-        } catch (error) {
-            console.error('Erreur simulation:', error);
+            for (let i = 0; i < numStates; i++) {
+                const probability = algorithm === 'grover' 
+                    ? (i === Math.floor(numStates/2) ? 0.8 : 0.2/(numStates-1))
+                    : Math.random();
+                
+                simulatedResults.push({
+                    state: `|${i.toString(2).padStart(qubits, '0')}⟩`,
+                    probability: probability,
+                    amplitude: {
+                        real: (Math.random() - 0.5) * 2,
+                        imaginary: (Math.random() - 0.5) * 2
+                    }
+                });
+            }
+            
+            const total = simulatedResults.reduce((sum, r) => sum + r.probability, 0);
+            simulatedResults.forEach(r => r.probability = r.probability / total);
+            
+            const sortedResults = simulatedResults.sort((a, b) => b.probability - a.probability);
+            setResults(sortedResults);
+            
+            const historyEntry = {
+                timestamp: new Date(),
+                algorithm,
+                qubits,
+                results: sortedResults.slice(0, 3)
+            };
+            setSimulationHistory(prev => [historyEntry, ...prev.slice(0, 4)]);
+            
             setIsRunning(false);
-        }
+        }, 2000 + Math.random() * 2000);
     };
 
     const getAlgorithmDescription = (algo) => {
@@ -101,7 +74,6 @@ export default function QuantumSimulation() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-            {/* Header */}
             <header className="bg-black/50 backdrop-blur-lg border-b border-purple-500/30 sticky top-0 z-50">
                 <div className="container mx-auto px-6 py-4">
                     <div className="flex items-center justify-between">
@@ -129,7 +101,6 @@ export default function QuantumSimulation() {
             </header>
 
             <div className="container mx-auto px-6 py-12 relative z-10">
-                {/* Title */}
                 <div className="mb-12 text-center">
                     <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
                         Simulateur Quantique
@@ -140,12 +111,10 @@ export default function QuantumSimulation() {
                 </div>
 
                 <div className="grid lg:grid-cols-3 gap-8">
-                    {/* Configuration Panel */}
                     <div className="lg:col-span-1">
                         <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6 mb-6">
                             <h2 className="text-2xl font-bold text-purple-300 mb-6">Configuration</h2>
                             
-                            {/* Qubits Selector */}
                             <div className="mb-6">
                                 <label className="block text-purple-200 text-sm font-semibold mb-2">
                                     Nombre de Qubits
@@ -157,7 +126,7 @@ export default function QuantumSimulation() {
                                         max="8"
                                         value={qubits}
                                         onChange={(e) => setQubits(parseInt(e.target.value))}
-                                        className="flex-1 h-2 bg-purple-700 rounded-lg appearance-none cursor-pointer slider"
+                                        className="flex-1 h-2 bg-purple-700 rounded-lg appearance-none cursor-pointer"
                                     />
                                     <span className="text-cyan-400 font-bold text-xl w-8">{qubits}</span>
                                 </div>
@@ -166,7 +135,6 @@ export default function QuantumSimulation() {
                                 </div>
                             </div>
 
-                            {/* Algorithm Selector */}
                             <div className="mb-6">
                                 <label className="block text-purple-200 text-sm font-semibold mb-2">
                                     Algorithme Quantique
@@ -185,15 +153,10 @@ export default function QuantumSimulation() {
                                 </div>
                             </div>
 
-                            {/* Run Button */}
                             <button
                                 onClick={runSimulation}
                                 disabled={isRunning}
-                                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 
-                                         disabled:opacity-50 disabled:cursor-not-allowed
-                                         text-white font-bold py-4 px-6 rounded-xl text-lg
-                                         transform hover:scale-105 transition-all duration-300
-                                         shadow-lg hover:shadow-purple-500/25"
+                                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-xl text-lg transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-purple-500/25"
                             >
                                 {isRunning ? (
                                     <div className="flex items-center justify-center space-x-2">
@@ -206,7 +169,6 @@ export default function QuantumSimulation() {
                             </button>
                         </div>
 
-                        {/* Quantum State Visualization */}
                         <div className="bg-black/30 backdrop-blur-lg border border-cyan-500/50 rounded-xl p-6">
                             <h3 className="text-xl font-bold text-cyan-300 mb-4">État Quantique</h3>
                             <div className="space-y-3">
@@ -226,7 +188,6 @@ export default function QuantumSimulation() {
                         </div>
                     </div>
 
-                    {/* Results Panel */}
                     <div className="lg:col-span-2">
                         <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6 mb-6">
                             <h2 className="text-2xl font-bold text-purple-300 mb-6">Résultats de Simulation</h2>
@@ -260,7 +221,6 @@ export default function QuantumSimulation() {
                                                 </span>
                                             </div>
                                             
-                                            {/* Probability Bar */}
                                             <div className="w-full bg-slate-700 rounded-full h-3 mb-3">
                                                 <div 
                                                     className="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all duration-1000"
@@ -268,7 +228,6 @@ export default function QuantumSimulation() {
                                                 ></div>
                                             </div>
                                             
-                                            {/* Amplitude Details */}
                                             <div className="grid grid-cols-2 gap-4 text-sm">
                                                 <div>
                                                     <span className="text-purple-400">Amplitude réelle:</span>
@@ -294,7 +253,6 @@ export default function QuantumSimulation() {
                             )}
                         </div>
 
-                        {/* Simulation History */}
                         {simulationHistory.length > 0 && (
                             <div className="bg-black/30 backdrop-blur-lg border border-cyan-500/50 rounded-xl p-6">
                                 <h3 className="text-xl font-bold text-cyan-300 mb-4">Historique des Simulations</h3>
@@ -324,7 +282,6 @@ export default function QuantumSimulation() {
                     </div>
                 </div>
 
-                {/* Integration Info */}
                 <div className="mt-12 bg-black/30 backdrop-blur-lg border border-yellow-500/50 rounded-xl p-6">
                     <div className="flex items-center space-x-4">
                         <div className="text-yellow-400 text-2xl">🔗</div>
@@ -343,40 +300,11 @@ export default function QuantumSimulation() {
                                 >
                                     📊 Voir Dashboard
                                 </Link>
-                                <button 
-                                    onClick={() => window.open('/docs/N8N_CONFIGURATION.md', '_blank')}
-                                    className="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-                                >
-                                    📖 Configuration
-                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            {/* Custom Styles for Slider */}
-            <style jsx>{`
-                .slider::-webkit-slider-thumb {
-                    appearance: none;
-                    height: 20px;
-                    width: 20px;
-                    border-radius: 50%;
-                    background: linear-gradient(45deg, #a855f7, #ec4899);
-                    cursor: pointer;
-                    box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
-                }
-                
-                .slider::-moz-range-thumb {
-                    height: 20px;
-                    width: 20px;
-                    border-radius: 50%;
-                    background: linear-gradient(45deg, #a855f7, #ec4899);
-                    cursor: pointer;
-                    border: none;
-                    box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
-                }
-            `}</style>
         </div>
     );
 }
