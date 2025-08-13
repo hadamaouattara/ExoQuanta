@@ -32,7 +32,6 @@ export default function ExonovQuantumHome() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-            {/* Header Quantum */}
             <header className="bg-black/50 backdrop-blur-lg border-b border-purple-500/30 sticky top-0 z-50">
                 <div className="container mx-auto px-6 py-4">
                     <div className="flex items-center justify-between">
@@ -59,7 +58,6 @@ export default function ExonovQuantumHome() {
                 </div>
             </header>
 
-            {/* Hero Section */}
             <section className="py-20 px-6">
                 <div className="container mx-auto text-center">
                     <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
@@ -74,7 +72,6 @@ export default function ExonovQuantumHome() {
                         Explorez les mystères de la physique quantique avec des outils de pointe.
                     </p>
 
-                    {/* Quantum State Display */}
                     <div className="mb-12">
                         <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-2xl p-8 max-w-md mx-auto">
                             <h3 className="text-purple-300 text-lg mb-4">État Quantique Actuel</h3>
@@ -87,7 +84,6 @@ export default function ExonovQuantumHome() {
                         </div>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                         <button 
                             onClick={simulateQuantum}
@@ -114,7 +110,6 @@ export default function ExonovQuantumHome() {
                 </div>
             </section>
 
-            {/* Features Section */}
             <section id="features" className="py-20 px-6">
                 <div className="container mx-auto">
                     <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
@@ -122,11 +117,10 @@ export default function ExonovQuantumHome() {
                     </h2>
                     
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {/* Feature Cards */}
                         <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6 hover:border-purple-400/70 transition-all duration-300">
                             <h3 className="text-xl font-bold text-purple-300 mb-4">🔬 Simulation Multi-Qubits</h3>
                             <p className="text-purple-200">
-                                Simulez des systèmes quantiques complexes avec jusqu'à 8 qubits.
+                                Simulez des systèmes quantiques complexes avec jusqu&apos;à 8 qubits.
                                 Algorithmes optimisés pour des performances maximales.
                             </p>
                         </div>
@@ -134,7 +128,7 @@ export default function ExonovQuantumHome() {
                         <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6 hover:border-purple-400/70 transition-all duration-300">
                             <h3 className="text-xl font-bold text-purple-300 mb-4">🌀 Algorithmes Quantiques</h3>
                             <p className="text-purple-200">
-                                Implémentez Shor, Grover, Hadamard et d'autres algorithmes quantiques
+                                Implémentez Shor, Grover, Hadamard et d&apos;autres algorithmes quantiques
                                 révolutionnaires avec notre interface intuitive.
                             </p>
                         </div>
@@ -143,7 +137,7 @@ export default function ExonovQuantumHome() {
                             <h3 className="text-xl font-bold text-purple-300 mb-4">📊 Dashboard n8n</h3>
                             <p className="text-purple-200">
                                 Contrôlez et surveillez vos 13+ workflows quantiques n8n
-                                directement depuis l'interface Exonov Quantum.
+                                directement depuis l&apos;interface Exonov Quantum.
                             </p>
                         </div>
 
@@ -174,7 +168,6 @@ export default function ExonovQuantumHome() {
                 </div>
             </section>
 
-            {/* Status Section */}
             <section className="py-16 px-6 bg-black/20">
                 <div className="container mx-auto text-center">
                     <h2 className="text-3xl font-bold mb-8 text-purple-300">
@@ -213,7 +206,6 @@ export default function ExonovQuantumHome() {
                 </div>
             </section>
 
-            {/* Footer */}
             <footer className="bg-black/50 backdrop-blur-lg border-t border-purple-500/30 py-12 px-6">
                 <div className="container mx-auto text-center">
                     <div className="text-purple-300 mb-4">
