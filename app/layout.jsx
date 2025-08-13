@@ -1,4 +1,19 @@
 import '../styles/globals.css';
+import { Inter, JetBrains_Mono } from 'next/font/google';
+
+const inter = Inter({
+    subsets: ['latin'],
+    weight: ['300', '400', '500', '600', '700', '800', '900'],
+    display: 'swap',
+    variable: '--font-inter'
+});
+
+const jetbrainsMono = JetBrains_Mono({
+    subsets: ['latin'],
+    weight: ['300', '400', '500', '600', '700'],
+    display: 'swap',
+    variable: '--font-jetbrains-mono'
+});
 
 export const metadata = {
     title: {
@@ -29,22 +44,15 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
     return (
-        <html lang="fr">
+        <html lang="fr" className={`${inter.variable} ${jetbrainsMono.variable}`}>
             <head>
                 <link rel="icon" href="/quantum-favicon.svg" sizes="any" />
-                <link rel="preconnect" href="https://fonts.googleapis.com" />
-                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-                <link 
-                    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" 
-                    rel="stylesheet" 
-                />
             </head>
             <body className="antialiased text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-inter">
                 <div className="min-h-screen">
                     <main className="w-full">{children}</main>
                 </div>
                 
-                {/* Quantum Background Effects */}
                 <div className="fixed inset-0 pointer-events-none z-0">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(147,51,234,0.1),transparent_50%)]"></div>
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(139,92,246,0.1),transparent_50%)]"></div>
