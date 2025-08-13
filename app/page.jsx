@@ -2,9 +2,6 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { Card } from 'components/card';
-import { ContextAlert } from 'components/context-alert';
-import { Markdown } from 'components/markdown';
 
 export default function ExonovQuantumHome() {
     const [quantumState, setQuantumState] = useState(0);
@@ -48,11 +45,11 @@ export default function ExonovQuantumHome() {
                             </h1>
                         </div>
                         <nav className="hidden md:flex space-x-6">
-                            <Link href="#simulation" className="text-purple-300 hover:text-purple-100 transition-colors">
-                                Simulation
+                            <Link href="/dashboard" className="text-purple-300 hover:text-purple-100 transition-colors">
+                                Dashboard
                             </Link>
-                            <Link href="#research" className="text-purple-300 hover:text-purple-100 transition-colors">
-                                Recherche
+                            <Link href="/simulation" className="text-purple-300 hover:text-purple-100 transition-colors">
+                                Simulation
                             </Link>
                             <Link href="#docs" className="text-purple-300 hover:text-purple-100 transition-colors">
                                 Documentation
@@ -65,10 +62,6 @@ export default function ExonovQuantumHome() {
             {/* Hero Section */}
             <section className="py-20 px-6">
                 <div className="container mx-auto text-center">
-                    <div className="mb-8">
-                        <ContextAlert className="mb-6" />
-                    </div>
-                    
                     <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
                         EXONOV
                     </h1>
@@ -109,13 +102,13 @@ export default function ExonovQuantumHome() {
                         </button>
                         
                         <Link 
-                            href="#features" 
+                            href="/dashboard" 
                             className="bg-black/50 backdrop-blur-lg border border-purple-500/50 
                                      text-purple-300 font-bold py-4 px-8 rounded-xl text-lg
                                      hover:bg-purple-900/30 hover:border-purple-400
                                      transform hover:scale-105 transition-all duration-300"
                         >
-                            🔬 Explorer les Fonctionnalités
+                            🔬 Dashboard n8n
                         </Link>
                     </div>
                 </div>
@@ -130,47 +123,53 @@ export default function ExonovQuantumHome() {
                     
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {/* Feature Cards */}
-                        <Card title="🔬 Simulation Multi-Qubits">
+                        <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6 hover:border-purple-400/70 transition-all duration-300">
+                            <h3 className="text-xl font-bold text-purple-300 mb-4">🔬 Simulation Multi-Qubits</h3>
                             <p className="text-purple-200">
-                                Simulez des systèmes quantiques complexes avec jusqu'à 30 qubits.
+                                Simulez des systèmes quantiques complexes avec jusqu'à 8 qubits.
                                 Algorithmes optimisés pour des performances maximales.
                             </p>
-                        </Card>
+                        </div>
 
-                        <Card title="🌀 Intrication Quantique">
+                        <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6 hover:border-purple-400/70 transition-all duration-300">
+                            <h3 className="text-xl font-bold text-purple-300 mb-4">🌀 Algorithmes Quantiques</h3>
                             <p className="text-purple-200">
-                                Explorez les phénomènes d'intrication et de téléportation quantique
-                                avec des visualisations interactives en temps réel.
-                            </p>
-                        </Card>
-
-                        <Card title="⚡ Algorithmes Quantiques">
-                            <p className="text-purple-200">
-                                Implémentez Shor, Grover, et d'autres algorithmes quantiques
+                                Implémentez Shor, Grover, Hadamard et d'autres algorithmes quantiques
                                 révolutionnaires avec notre interface intuitive.
                             </p>
-                        </Card>
+                        </div>
 
-                        <Card title="📊 Analyse Avancée">
+                        <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6 hover:border-purple-400/70 transition-all duration-300">
+                            <h3 className="text-xl font-bold text-purple-300 mb-4">📊 Dashboard n8n</h3>
                             <p className="text-purple-200">
-                                Analysez les résultats avec des outils statistiques puissants
-                                et des visualisations de données quantiques.
+                                Contrôlez et surveillez vos 13+ workflows quantiques n8n
+                                directement depuis l'interface Exonov Quantum.
                             </p>
-                        </Card>
+                        </div>
 
-                        <Card title="🎯 Interface IA">
+                        <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6 hover:border-purple-400/70 transition-all duration-300">
+                            <h3 className="text-xl font-bold text-purple-300 mb-4">⚡ API Bridge</h3>
                             <p className="text-purple-200">
-                                Assistant IA intégré pour optimiser vos circuits quantiques
-                                et suggérer des améliorations en temps réel.
+                                Connexion transparente avec votre instance n8n pour
+                                des workflows quantiques automatisés et intelligents.
                             </p>
-                        </Card>
+                        </div>
 
-                        <Card title="🌐 Collaboration">
+                        <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6 hover:border-purple-400/70 transition-all duration-300">
+                            <h3 className="text-xl font-bold text-purple-300 mb-4">🎯 Interface Futuriste</h3>
                             <p className="text-purple-200">
-                                Partagez vos recherches et collaborez avec la communauté
-                                scientifique mondiale en temps réel.
+                                Design moderne avec animations quantiques en temps réel
+                                et effets visuels spectaculaires.
                             </p>
-                        </Card>
+                        </div>
+
+                        <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6 hover:border-purple-400/70 transition-all duration-300">
+                            <h3 className="text-xl font-bold text-purple-300 mb-4">🌐 GitHub Actions</h3>
+                            <p className="text-purple-200">
+                                Déploiement automatique via GitHub Actions
+                                avec intégration continue et tests automatisés.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -203,12 +202,12 @@ export default function ExonovQuantumHome() {
                         
                         <div className="bg-black/30 backdrop-blur-lg border border-blue-500/50 rounded-xl p-6">
                             <div className="text-blue-400 text-2xl mb-2">⚡</div>
-                            <div className="text-blue-300 font-semibold">Performance Optimale</div>
+                            <div className="text-blue-300 font-semibold">GitHub Actions Actif</div>
                         </div>
                         
                         <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6">
                             <div className="text-purple-400 text-2xl mb-2">🔮</div>
-                            <div className="text-purple-300 font-semibold">IA Quantique Active</div>
+                            <div className="text-purple-300 font-semibold">n8n Intégré</div>
                         </div>
                     </div>
                 </div>
@@ -218,7 +217,7 @@ export default function ExonovQuantumHome() {
             <footer className="bg-black/50 backdrop-blur-lg border-t border-purple-500/30 py-12 px-6">
                 <div className="container mx-auto text-center">
                     <div className="text-purple-300 mb-4">
-                        Powered by Exonov Quantum Engine v1.0
+                        Powered by Exonov Quantum Engine v1.0 + GitHub Actions
                     </div>
                     <div className="text-purple-500 text-sm">
                         © 2025 Exonov Quantum. Révolutionnant la physique quantique.
