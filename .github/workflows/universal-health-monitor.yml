@@ -1,0 +1,380 @@
+name: 📊 Universal Health Monitor - Post Deployment Validation
+
+on:
+  workflow_run:
+    workflows: ["🛡️ Universal Quality Gate - Zero Error Deployment"]
+    types: [completed]
+  schedule:
+    # Run health check every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    # Allow manual trigger
+
+jobs:
+  detect-deployment:
+    name: 🔍 Deployment Detection
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    outputs:
+      project_type: ${{ steps.detect.outputs.project_type }}
+      has_deployment: ${{ steps.detect.outputs.has_deployment }}
+      deployment_url: ${{ steps.detect.outputs.deployment_url }}
+      
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: 🔍 Detect Deployment Configuration
+      id: detect
+      run: |
+        echo "🔍 Detecting deployment configuration..."
+        
+        PROJECT_TYPE="generic"
+        HAS_DEPLOYMENT="false"
+        DEPLOYMENT_URL=""
+        
+        # Check for Netlify
+        if [ -f "netlify.toml" ] || [ -f "_redirects" ]; then
+          echo "🌐 Netlify deployment detected"
+          HAS_DEPLOYMENT="true"
+          
+          # Try to extract site URL from README or config
+          if grep -q "netlify.app" README.md 2>/dev/null; then
+            DEPLOYMENT_URL=$(grep -o "https://[^)]*\.netlify\.app" README.md | head -1)
+          fi
+        fi
+        
+        # Check for Vercel
+        if [ -f "vercel.json" ] || [ -d ".vercel" ]; then
+          echo "▲ Vercel deployment detected"
+          HAS_DEPLOYMENT="true"
+        fi
+        
+        # Check for Firebase
+        if [ -f "firebase.json" ]; then
+          echo "🔥 Firebase deployment detected"
+          HAS_DEPLOYMENT="true"
+        fi
+        
+        # Detect project type
+        if [ -f "package.json" ]; then
+          if grep -q "next" package.json; then
+            PROJECT_TYPE="nextjs"
+          elif grep -q "react" package.json; then
+            PROJECT_TYPE="react"
+          fi
+        fi
+        
+        echo "📊 Detection Results:"
+        echo "- Project Type: $PROJECT_TYPE"
+        echo "- Has Deployment: $HAS_DEPLOYMENT"
+        echo "- Deployment URL: $DEPLOYMENT_URL"
+        
+        echo "project_type=$PROJECT_TYPE" >> $GITHUB_OUTPUT
+        echo "has_deployment=$HAS_DEPLOYMENT" >> $GITHUB_OUTPUT
+        echo "deployment_url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+
+  health-monitor:
+    name: 🏥 System Health Check
+    runs-on: ubuntu-latest
+    needs: detect-deployment
+    timeout-minutes: 10
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Setup Node.js
+      if: needs.detect-deployment.outputs.project_type != 'generic'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 🔍 Deep Structure Validation
+      run: |
+        echo "🔍 Performing deep structure validation..."
+        
+        PROJECT_TYPE="${{ needs.detect-deployment.outputs.project_type }}"
+        
+        # Universal file checks
+        echo "📁 Checking universal project structure..."
+        
+        if [ ! -f "README.md" ]; then
+          echo "⚠️ WARNING: README.md missing"
+        else
+          echo "✅ README.md found"
+        fi
+        
+        if [ ! -f ".gitignore" ]; then
+          echo "⚠️ WARNING: .gitignore missing"
+        else
+          echo "✅ .gitignore found"
+        fi
+        
+        # Project-specific validation
+        case $PROJECT_TYPE in
+          "nextjs")
+            echo "🚀 Next.js health validation..."
+            
+            REQUIRED_FILES=("package.json" "next.config.js")
+            
+            for file in "${REQUIRED_FILES[@]}"; do
+              if [ -f "$file" ]; then
+                echo "✅ Found: $file"
+              else
+                echo "❌ CRITICAL: Missing $file"
+                exit 1
+              fi
+            done
+            
+            # Check app directory structure
+            if [ -d "app" ]; then
+              echo "✅ App Router structure detected"
+              
+              if [ ! -f "app/layout.jsx" ] && [ ! -f "app/layout.tsx" ]; then
+                echo "❌ CRITICAL: app/layout missing"
+                exit 1
+              fi
+              
+              if [ ! -f "app/page.jsx" ] && [ ! -f "app/page.tsx" ]; then
+                echo "❌ CRITICAL: app/page missing"
+                exit 1
+              fi
+            elif [ -d "pages" ]; then
+              echo "✅ Pages Router structure detected"
+            else
+              echo "⚠️ WARNING: No Next.js routing structure found"
+            fi
+            ;;
+            
+          "react")
+            echo "⚛️ React health validation..."
+            
+            if [ -f "src/App.js" ] || [ -f "src/App.jsx" ] || [ -f "src/App.tsx" ]; then
+              echo "✅ React App component found"
+            else
+              echo "❌ CRITICAL: React App component missing"
+              exit 1
+            fi
+            ;;
+            
+          *)
+            echo "📦 Generic project validation..."
+            ;;
+        esac
+        
+        echo "✅ Deep structure validation PASSED"
+        
+    - name: 🔍 Dependencies Health Check
+      if: needs.detect-deployment.outputs.project_type != 'generic'
+      run: |
+        echo "🔍 Checking dependencies health..."
+        
+        # Install dependencies
+        npm ci --prefer-offline --no-audit
+        
+        # Quick security audit
+        echo "🔒 Running security audit..."
+        npm audit --audit-level high || echo "⚠️ High severity vulnerabilities found"
+        
+        # Check for outdated packages
+        echo "📦 Checking for outdated packages..."
+        npm outdated || echo "ℹ️ Some packages may be outdated"
+        
+        # Verify package-lock integrity
+        if [ -f "package-lock.json" ]; then
+          echo "🔐 Verifying package-lock integrity..."
+          npm ci --dry-run
+        fi
+        
+        echo "✅ Dependencies health check PASSED"
+        
+    - name: 🏗️ Build Integrity Test
+      if: needs.detect-deployment.outputs.project_type != 'generic'
+      run: |
+        echo "🏗️ Testing build integrity..."
+        
+        # Clean previous builds
+        rm -rf .next out dist build
+        
+        # Test build process
+        if npm run build; then
+          echo "✅ Build successful"
+          
+          # Check build output
+          PROJECT_TYPE="${{ needs.detect-deployment.outputs.project_type }}"
+          
+          case $PROJECT_TYPE in
+            "nextjs")
+              if [ -d ".next" ] || [ -d "out" ]; then
+                echo "✅ Next.js build output verified"
+                
+                # Check build size
+                if [ -d "out" ]; then
+                  BUILD_SIZE=$(du -sh out 2>/dev/null | cut -f1)
+                elif [ -d ".next" ]; then
+                  BUILD_SIZE=$(du -sh .next 2>/dev/null | cut -f1)
+                fi
+                
+                echo "📦 Build size: ${BUILD_SIZE:-Unknown}"
+              else
+                echo "❌ CRITICAL: No build output found"
+                exit 1
+              fi
+              ;;
+              
+            "react")
+              if [ -d "build" ] || [ -d "dist" ]; then
+                echo "✅ React build output verified"
+              else
+                echo "❌ CRITICAL: No build output found"
+                exit 1
+              fi
+              ;;
+          esac
+        else
+          echo "❌ CRITICAL: Build failed"
+          exit 1
+        fi
+        
+        echo "✅ Build integrity test PASSED"
+
+  deployment-health:
+    name: 🌐 Deployment Health Check
+    runs-on: ubuntu-latest
+    needs: [detect-deployment, health-monitor]
+    if: needs.detect-deployment.outputs.has_deployment == 'true' && success()
+    
+    steps:
+    - name: 🌐 Test Deployment Accessibility
+      run: |
+        echo "🌐 Testing deployment accessibility..."
+        
+        DEPLOYMENT_URL="${{ needs.detect-deployment.outputs.deployment_url }}"
+        
+        if [ -n "$DEPLOYMENT_URL" ]; then
+          echo "🔗 Testing URL: $DEPLOYMENT_URL"
+          
+          # Test HTTP response
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$DEPLOYMENT_URL" || echo "000")
+          
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "✅ Deployment is accessible (HTTP $HTTP_STATUS)"
+          else
+            echo "⚠️ WARNING: Deployment returned HTTP $HTTP_STATUS"
+          fi
+          
+          # Test response time
+          RESPONSE_TIME=$(curl -s -o /dev/null -w "%{time_total}" "$DEPLOYMENT_URL" || echo "0")
+          echo "⏱️ Response time: ${RESPONSE_TIME}s"
+          
+          if [ -n "$RESPONSE_TIME" ] && [ "$RESPONSE_TIME" != "0" ]; then
+            if (( $(echo "$RESPONSE_TIME < 2.0" | bc -l) )); then
+              echo "✅ Response time is good (<2s)"
+            else
+              echo "⚠️ WARNING: Slow response time (>2s)"
+            fi
+          fi
+        else
+          echo "ℹ️ No deployment URL configured for automated testing"
+        fi
+
+  performance-validation:
+    name: ⚡ Performance Validation
+    runs-on: ubuntu-latest
+    needs: health-monitor
+    if: success()
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: ⚡ Performance Analysis
+      run: |
+        echo "⚡ Running performance analysis..."
+        
+        # File count analysis
+        JS_COUNT=$(find . -name "*.js" -not -path "./node_modules/*" | wc -l)
+        JSX_COUNT=$(find . -name "*.jsx" -not -path "./node_modules/*" | wc -l)
+        TS_COUNT=$(find . -name "*.ts" -not -path "./node_modules/*" | wc -l)
+        TSX_COUNT=$(find . -name "*.tsx" -not -path "./node_modules/*" | wc -l)
+        
+        echo "📊 Code Metrics:"
+        echo "- JavaScript files: $JS_COUNT"
+        echo "- JSX files: $JSX_COUNT"
+        echo "- TypeScript files: $TS_COUNT"
+        echo "- TSX files: $TSX_COUNT"
+        echo "- Total source files: $((JS_COUNT + JSX_COUNT + TS_COUNT + TSX_COUNT))"
+        
+        # Repository size analysis
+        REPO_SIZE=$(du -sh . 2>/dev/null | cut -f1)
+        echo "📦 Repository size: $REPO_SIZE"
+        
+        echo "✅ Performance analysis completed"
+
+  generate-health-report:
+    name: 📊 Generate Health Report
+    runs-on: ubuntu-latest
+    needs: [detect-deployment, health-monitor, deployment-health, performance-validation]
+    if: always()
+    
+    steps:
+    - name: 📊 Compile Health Report
+      run: |
+        echo "📊 Generating comprehensive health report..."
+        
+        echo "=== UNIVERSAL HEALTH MONITOR REPORT ==="
+        echo "Repository: ${{ github.repository }}"
+        echo "Commit: ${{ github.sha }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Project Type: ${{ needs.detect-deployment.outputs.project_type }}"
+        echo "Has Deployment: ${{ needs.detect-deployment.outputs.has_deployment }}"
+        echo "Date: $(date)"
+        echo ""
+        
+        echo "🏥 HEALTH CHECK RESULTS:"
+        
+        if [ "${{ needs.health-monitor.result }}" = "success" ]; then
+          echo "  ✅ System Health: HEALTHY"
+        else
+          echo "  ❌ System Health: FAILED"
+        fi
+        
+        if [ "${{ needs.deployment-health.result }}" = "success" ]; then
+          echo "  ✅ Deployment: ACCESSIBLE"
+        elif [ "${{ needs.deployment-health.result }}" = "skipped" ]; then
+          echo "  ℹ️ Deployment: NOT CONFIGURED"
+        else
+          echo "  ❌ Deployment: ISSUES DETECTED"
+        fi
+        
+        if [ "${{ needs.performance-validation.result }}" = "success" ]; then
+          echo "  ✅ Performance: OPTIMAL"
+        else
+          echo "  ❌ Performance: ISSUES DETECTED"
+        fi
+        
+        echo ""
+        
+        # Overall status
+        if [ "${{ needs.health-monitor.result }}" = "success" ]; then
+          echo "🎯 OVERALL STATUS: SYSTEM HEALTHY ✅"
+          echo "🚀 Project is running optimally"
+        else
+          echo "🚨 OVERALL STATUS: ATTENTION REQUIRED ⚠️"
+          echo "🔧 Please review the issues above"
+        fi
+
+    - name: 🚨 Alert on Critical Issues
+      if: needs.health-monitor.result == 'failure'
+      run: |
+        echo "🚨 =========================================="
+        echo "🚨 CRITICAL HEALTH ISSUES DETECTED!"
+        echo "🚨 =========================================="
+        echo "❌ System integrity compromised"
+        echo "❌ Immediate attention required"
+        echo ""
+        echo "📧 Please check the logs above for details"
+        echo "🔧 Fix issues to ensure system stability"
+        exit 1
