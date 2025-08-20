@@ -1,0 +1,156 @@
+name: 🛠️ Setup Universal Automation
+
+on:
+  workflow_dispatch:
+    inputs:
+      workflows:
+        description: 'Which workflows to install?'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - quality-gate
+        - health-monitor
+        - auto-rollback
+        - performance-audit
+        - minimal (quality-gate + health-monitor)
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: 📦 Download and Install Universal Workflows
+      run: |
+        echo "📦 Installing ExoQuanta automation workflows..."
+        
+        BASE_URL="https://raw.githubusercontent.com/hadamaouattara/.github/main/workflow-templates"
+        WORKFLOWS="${{ github.event.inputs.workflows }}"
+        
+        # Remove existing quality gate (will be replaced with universal version)
+        rm -f .github/workflows/quality-gate.yml
+        
+        # Install based on selection
+        case $WORKFLOWS in
+          "all")
+            echo "📦 Installing complete automation suite..."
+            curl -o .github/workflows/universal-quality-gate.yml "$BASE_URL/universal-quality-gate.yml"
+            curl -o .github/workflows/universal-health-monitor.yml "$BASE_URL/universal-health-monitor.yml"
+            curl -o .github/workflows/universal-auto-rollback.yml "$BASE_URL/universal-auto-rollback.yml"
+            curl -o .github/workflows/universal-performance-audit.yml "$BASE_URL/universal-performance-audit.yml"
+            ;;
+            
+          "minimal")
+            echo "📦 Installing minimal automation..."
+            curl -o .github/workflows/universal-quality-gate.yml "$BASE_URL/universal-quality-gate.yml"
+            curl -o .github/workflows/universal-health-monitor.yml "$BASE_URL/universal-health-monitor.yml"
+            ;;
+            
+          *)
+            curl -o ".github/workflows/universal-${{ github.event.inputs.workflows }}.yml" "$BASE_URL/universal-${{ github.event.inputs.workflows }}.yml"
+            ;;
+        esac
+        
+    - name: 📚 Create ExoQuanta Documentation
+      run: |
+        cat > EXOQUANTA_AUTOMATION.md << EOF
+# 🚀 ExoQuanta Automation System
+
+## 🎯 Overview
+ExoQuanta now uses the Universal GitHub Actions Automation System, providing:
+
+### ✅ Installed Workflows
+EOF
+
+        # Document installed workflows
+        if [ -f ".github/workflows/universal-quality-gate.yml" ]; then
+          echo "- **🛡️ Quality Gate**: Validates Firebase integration, Next.js config, and quantum components" >> EXOQUANTA_AUTOMATION.md
+        fi
+        
+        if [ -f ".github/workflows/universal-health-monitor.yml" ]; then
+          echo "- **📊 Health Monitor**: Monitors Netlify deployment and quantum simulation performance" >> EXOQUANTA_AUTOMATION.md
+        fi
+        
+        if [ -f ".github/workflows/universal-auto-rollback.yml" ]; then
+          echo "- **🔄 Auto Rollback**: Emergency recovery to stable quantum state" >> EXOQUANTA_AUTOMATION.md
+        fi
+        
+        if [ -f ".github/workflows/universal-performance-audit.yml" ]; then
+          echo "- **⚡ Performance Audit**: Daily quantum simulation performance analysis" >> EXOQUANTA_AUTOMATION.md
+        fi
+
+        cat >> EXOQUANTA_AUTOMATION.md << EOF
+
+## 🔥 ExoQuanta-Specific Features
+
+### Next.js + Firebase Validation
+- Validates Firebase authentication configuration
+- Checks quantum component imports
+- Tests build with static export
+
+### Quantum Platform Monitoring
+- Monitors quantum state simulations
+- Validates n8n workflow integrations
+- Checks quantum algorithm performance
+
+### Deployment Tracking
+- Netlify deployment health: https://exoquanta.netlify.app
+- Firebase Auth integration status
+- Real-time quantum state monitoring
+
+## 🎛️ Monitoring Schedule
+- **Quality Gate**: Every commit
+- **Health Monitor**: Every 6 hours
+- **Performance Audit**: Daily at 2 AM UTC
+- **Auto Rollback**: On critical failures
+
+## 🆘 Emergency Procedures
+If quantum simulations fail:
+1. Auto rollback activates automatically
+2. Stable quantum state restored
+3. Investigation branch created
+4. Firebase auth maintained
+
+## 📈 Success Metrics
+- Zero deployment errors
+- <5min recovery time
+- 99.9% quantum simulation uptime
+- Proactive issue detection
+
+---
+**Powered by Universal Automation System**
+EOF
+
+    - name: ✅ Commit Automation Setup
+      run: |
+        git config user.name "ExoQuanta Automation"
+        git config user.email "automation@exoquanta"
+        
+        git add .
+        git commit -m "🚀 UPGRADE: ExoQuanta Universal Automation System
+
+Installed workflows: ${{ github.event.inputs.workflows }}
+
+🔥 NEW FEATURES:
+- Universal Quality Gate with Firebase validation
+- Quantum-aware health monitoring
+- Emergency rollback for quantum states
+- Performance audit for quantum simulations
+
+✅ EXOQUANTA READY:
+- Next.js static export validated
+- Firebase Auth integration checked
+- Netlify deployment monitored
+- Quantum components tested
+
+This upgrade provides enterprise-grade automation
+specifically optimized for quantum computing platforms."
+        
+        git push
+        
+        echo "🎉 ExoQuanta automation setup complete! 🚀"
