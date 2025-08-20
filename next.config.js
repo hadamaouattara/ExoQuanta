@@ -8,7 +8,7 @@ const nextConfig = {
     // Désactiver les fonctionnalités qui ne fonctionnent pas en mode static
     poweredByHeader: false,
     reactStrictMode: true,
-    swcMinify: true,
+    // swcMinify retiré - obsolète dans Next.js 15
 }
 
 module.exports = nextConfig
