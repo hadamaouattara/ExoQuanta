@@ -2,10 +2,13 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import NavBar from '@/components/NavBar';
 
 export default function ExonovQuantumHome() {
     const [quantumState, setQuantumState] = useState(0);
     const [isSimulating, setIsSimulating] = useState(false);
+    const { user } = useAuth();
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -32,34 +35,23 @@ export default function ExonovQuantumHome() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-            <header className="bg-black/50 backdrop-blur-lg border-b border-purple-500/30 sticky top-0 z-50">
-                <div className="container mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-xl">Q</span>
-                            </div>
-                            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                                EXONOV QUANTUM
-                            </h1>
-                        </div>
-                        <nav className="hidden md:flex space-x-6">
-                            <Link href="/dashboard" className="text-purple-300 hover:text-purple-100 transition-colors">
-                                Dashboard
-                            </Link>
-                            <Link href="/simulation" className="text-purple-300 hover:text-purple-100 transition-colors">
-                                Simulation
-                            </Link>
-                            <Link href="#docs" className="text-purple-300 hover:text-purple-100 transition-colors">
-                                Documentation
-                            </Link>
-                        </nav>
-                    </div>
-                </div>
-            </header>
+            <NavBar />
 
-            <section className="py-20 px-6">
+            <section className="pt-32 pb-20 px-6">
                 <div className="container mx-auto text-center">
+                    {/* Message de bienvenue personnalisé */}
+                    {user && (
+                        <div className="mb-8">
+                            <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 backdrop-blur-lg 
+                                          border border-purple-500/50 rounded-xl p-4 max-w-md mx-auto">
+                                <p className="text-purple-200">
+                                    Bienvenue, <span className="text-white font-semibold">{user.displayName || 'Scientifique Quantique'}</span> ! 
+                                    🔬
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
                         EXONOV
                     </h1>
@@ -150,10 +142,10 @@ export default function ExonovQuantumHome() {
                         </div>
 
                         <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6 hover:border-purple-400/70 transition-all duration-300">
-                            <h3 className="text-xl font-bold text-purple-300 mb-4">🎯 Interface Futuriste</h3>
+                            <h3 className="text-xl font-bold text-purple-300 mb-4">🔐 Authentification Sécurisée</h3>
                             <p className="text-purple-200">
-                                Design moderne avec animations quantiques en temps réel
-                                et effets visuels spectaculaires.
+                                Connexion sécurisée avec Firebase. Support Google, GitHub
+                                et email pour une expérience utilisateur optimale.
                             </p>
                         </div>
 
@@ -187,7 +179,7 @@ export default function ExonovQuantumHome() {
                         </div>
                     )}
 
-                    <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                    <div className="grid md:grid-cols-4 gap-6 max-w-5xl mx-auto">
                         <div className="bg-black/30 backdrop-blur-lg border border-green-500/50 rounded-xl p-6">
                             <div className="text-green-400 text-2xl mb-2">✅</div>
                             <div className="text-green-300 font-semibold">Système Opérationnel</div>
@@ -202,6 +194,11 @@ export default function ExonovQuantumHome() {
                             <div className="text-purple-400 text-2xl mb-2">🔮</div>
                             <div className="text-purple-300 font-semibold">n8n Intégré</div>
                         </div>
+
+                        <div className="bg-black/30 backdrop-blur-lg border border-orange-500/50 rounded-xl p-6">
+                            <div className="text-orange-400 text-2xl mb-2">🔥</div>
+                            <div className="text-orange-300 font-semibold">Firebase Auth</div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -209,7 +206,7 @@ export default function ExonovQuantumHome() {
             <footer className="bg-black/50 backdrop-blur-lg border-t border-purple-500/30 py-12 px-6">
                 <div className="container mx-auto text-center">
                     <div className="text-purple-300 mb-4">
-                        Powered by Exonov Quantum Engine v1.0 + GitHub Actions
+                        Powered by Exonov Quantum Engine v1.0 + Firebase + GitHub Actions
                     </div>
                     <div className="text-purple-500 text-sm">
                         © 2025 Exonov Quantum. Révolutionnant la physique quantique.
