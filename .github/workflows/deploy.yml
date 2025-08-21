@@ -1,38 +1,244 @@
-name: 🚀 Deploy Exonov Quantum to Netlify
+name: "Intelligent Deployment System"
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+    paths-ignore:
+      - '.github/**'
+      - '*.md'
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment bypass safety checks'
+        required: false
+        default: 'false'
+      skip_tests:
+        description: 'Skip validation tests'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  pre-deployment-validation:
     runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.decision.outputs.deploy }}
+      build_hash: ${{ steps.changes.outputs.hash }}
+      
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 5
+          
+      - name: Check deployment frequency
+        id: frequency
+        run: |
+          # Prevent deployments more frequent than every 5 minutes
+          last_deploy=$(curl -s "https://api.github.com/repos/${{ github.repository }}/actions/workflows/deploy.yml/runs?per_page=1" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" | \
+            jq -r '.workflow_runs[0].created_at // empty')
+            
+          if [ -n "$last_deploy" ]; then
+            last_deploy_timestamp=$(date -d "$last_deploy" +%s)
+            current_timestamp=$(date +%s)
+            time_diff=$((current_timestamp - last_deploy_timestamp))
+            
+            if [ $time_diff -lt 300 ] && [ "${{ github.event.inputs.force_deploy }}" != "true" ]; then
+              echo "Last deployment was $time_diff seconds ago (< 5 minutes)"
+              echo "rate_limited=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          fi
+          
+          echo "rate_limited=false" >> $GITHUB_OUTPUT
+          
+      - name: Analyze changes significance
+        id: changes
+        run: |
+          # Check what files changed
+          changed_files=$(git diff --name-only HEAD~1 HEAD || echo "")
+          
+          # Calculate significance score
+          significance=0
+          
+          # High impact changes
+          if echo "$changed_files" | grep -E "(package\.json|next\.config\.js|tailwind\.config\.js)"; then
+            significance=$((significance + 50))
+          fi
+          
+          # Medium impact changes  
+          if echo "$changed_files" | grep -E "\.(jsx?|tsx?|css|scss)$"; then
+            significance=$((significance + 20))
+          fi
+          
+          # Low impact changes
+          if echo "$changed_files" | grep -E "\.(md|txt|json)$"; then
+            significance=$((significance + 5))
+          fi
+          
+          # Workflow changes (should not trigger deployment)
+          if echo "$changed_files" | grep -E "^\.github/"; then
+            significance=0
+          fi
+          
+          echo "Significance score: $significance"
+          echo "significance=$significance" >> $GITHUB_OUTPUT
+          echo "hash=$(echo '$changed_files' | sha256sum | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          
+      - name: Make deployment decision
+        id: decision
+        run: |
+          rate_limited="${{ steps.frequency.outputs.rate_limited }}"
+          significance="${{ steps.changes.outputs.significance }}"
+          force_deploy="${{ github.event.inputs.force_deploy }}"
+          
+          # Decision logic
+          if [ "$force_deploy" = "true" ]; then
+            echo "deploy=true" >> $GITHUB_OUTPUT
+            echo "reason=Force deployment requested"
+          elif [ "$rate_limited" = "true" ]; then
+            echo "deploy=false" >> $GITHUB_OUTPUT
+            echo "reason=Rate limited - deployment too frequent"
+          elif [ "$significance" -lt 10 ]; then
+            echo "deploy=false" >> $GITHUB_OUTPUT
+            echo "reason=Changes not significant enough for deployment"
+          else
+            echo "deploy=true" >> $GITHUB_OUTPUT
+            echo "reason=Significant changes detected (score: $significance)"
+          fi
+
+  smoke-tests:
+    runs-on: ubuntu-latest
+    needs: pre-deployment-validation
+    if: needs.pre-deployment-validation.outputs.should_deploy == 'true' && github.event.inputs.skip_tests != 'true'
     
     steps:
-    - name: 📦 Checkout code
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       
-    - name: 🔧 Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
         
-    - name: 📥 Install dependencies
-      run: npm install
+      - name: Validate configuration
+        run: |
+          # Check for common config issues
+          if grep -q '"tailwindcss".*"4' package.json && ! grep -q '@tailwind' styles/globals.css; then
+            echo "ERROR: Tailwind v4 package with v3 syntax detected"
+            exit 1
+          fi
+          
+          if grep -q "import.*styles/" app/ && ! [ -f "styles/globals.css" ]; then
+            echo "ERROR: CSS imports but no CSS files found"
+            exit 1
+          fi
+          
+      - name: Build validation
+        run: |
+          echo "Running build validation..."
+          if ! npm run build; then
+            echo "Build failed - blocking deployment"
+            exit 1
+          fi
+          
+          # Verify CSS generation
+          if [ ! -d ".next" ] || ! find .next -name "*.css" | grep -q css; then
+            echo "No CSS files generated - potential Tailwind issue"
+            exit 1
+          fi
+          
+      - name: Basic functionality test
+        run: |
+          # Start server for testing
+          npm start &
+          server_pid=$!
+          sleep 5
+          
+          # Test critical endpoints
+          if ! curl -f http://localhost:3000 > /dev/null 2>&1; then
+            echo "Homepage not accessible"
+            kill $server_pid
+            exit 1
+          fi
+          
+          kill $server_pid
+          echo "Basic functionality tests passed"
+
+  intelligent-deploy:
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-validation, smoke-tests]
+    if: always() && needs.pre-deployment-validation.outputs.should_deploy == 'true' && (needs.smoke-tests.result == 'success' || needs.smoke-tests.result == 'skipped')
+    
+    environment:
+      name: production
+      url: https://quantum.exonovnow.com
       
-    - name: 🛠️ Build project
-      run: npm run build
-      env:
-        NODE_ENV: production
-        NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
         
-    - name: 🚀 Deploy to Netlify
-      uses: nwtgck/actions-netlify@v3.0.0
-      with:
-        publish-dir: './out'
-        production-branch: main
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        deploy-message: "🌌 Static Build ${{ github.sha }}"
-      env:
-        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build for production
+        run: npm run build
+        env:
+          NODE_ENV: production
+          NEXT_TELEMETRY_DISABLED: 1
+          
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v3.0.0
+        with:
+          publish-dir: '.next'
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Smart Deploy ${{ needs.pre-deployment-validation.outputs.build_hash }}"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          
+      - name: Post-deployment verification
+        run: |
+          echo "Waiting for deployment to propagate..."
+          sleep 30
+          
+          # Verify deployment
+          if curl -f https://quantum.exonovnow.com > /dev/null 2>&1; then
+            echo "Deployment verified successfully"
+          else
+            echo "WARNING: Deployment verification failed"
+            exit 1
+          fi
+          
+      - name: Update deployment status
+        run: |
+          echo "Deployment completed successfully"
+          echo "Build hash: ${{ needs.pre-deployment-validation.outputs.build_hash }}"
+          echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+
+  deployment-skipped:
+    runs-on: ubuntu-latest
+    needs: pre-deployment-validation
+    if: needs.pre-deployment-validation.outputs.should_deploy == 'false'
+    
+    steps:
+      - name: Log skip reason
+        run: |
+          echo "Deployment skipped"
+          echo "Reason: ${{ needs.pre-deployment-validation.outputs.reason || 'Unknown' }}"
+          echo ""
+          echo "To force deployment, use workflow_dispatch with force_deploy=true"
