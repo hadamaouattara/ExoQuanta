@@ -1,18 +1,24 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // Retiré output: 'export' pour permettre les routes API
+    // Configuration optimisée pour Netlify avec cache busting
     trailingSlash: true,
     images: {
         unoptimized: true,
     },
-    // Configuration optimisée pour Netlify
     poweredByHeader: false,
     reactStrictMode: true,
+    
+    // Force cache busting with timestamp
+    generateBuildId: () => {
+        return `build-${Date.now()}`;
+    },
+    
     // Optimisations pour le build
     experimental: {
         optimizeCss: true,
     },
-    // Headers de sécurité
+    
+    // Headers de sécurité et cache control
     async headers() {
         return [
             {
@@ -25,6 +31,10 @@ const nextConfig = {
                     {
                         key: 'X-Content-Type-Options',
                         value: 'nosniff',
+                    },
+                    {
+                        key: 'Cache-Control',
+                        value: 'no-cache, no-store, must-revalidate',
                     },
                 ],
             },
