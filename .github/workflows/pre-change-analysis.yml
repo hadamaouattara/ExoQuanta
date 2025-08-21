@@ -1,0 +1,191 @@
+name: 🔍 Pre-Change Analysis Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      analysis_type:
+        description: 'Type of analysis to perform'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+        - full
+        - config-only
+        - dependencies
+        - deployment
+      target_change:
+        description: 'Describe the change you want to make'
+        required: true
+        type: string
+
+jobs:
+  pre-change-analysis:
+    runs-on: ubuntu-latest
+    name: 🔍 Analyze Before Change
+    
+    steps:
+    - name: 📦 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        
+    - name: 🔍 Project Structure Analysis
+      run: |
+        echo "## 📁 PROJECT STRUCTURE ANALYSIS" >> analysis-report.md
+        echo "```" >> analysis-report.md
+        find . -type f -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" -o -name "*.json" -o -name "*.toml" -o -name "*.yml" -o -name "*.yaml" | head -20 >> analysis-report.md
+        echo "```" >> analysis-report.md
+        echo "" >> analysis-report.md
+        
+    - name: 📋 Configuration Files Audit
+      run: |
+        echo "## ⚙️ CONFIGURATION FILES AUDIT" >> analysis-report.md
+        echo "" >> analysis-report.md
+        
+        echo "### next.config.js" >> analysis-report.md
+        if [ -f "next.config.js" ]; then
+          echo "✅ **EXISTS**" >> analysis-report.md
+          echo "```javascript" >> analysis-report.md
+          cat next.config.js >> analysis-report.md
+          echo "```" >> analysis-report.md
+        else
+          echo "❌ **MISSING**" >> analysis-report.md
+        fi
+        echo "" >> analysis-report.md
+        
+        echo "### package.json" >> analysis-report.md
+        if [ -f "package.json" ]; then
+          echo "✅ **EXISTS**" >> analysis-report.md
+          echo "```json" >> analysis-report.md
+          cat package.json >> analysis-report.md
+          echo "```" >> analysis-report.md
+        else
+          echo "❌ **MISSING**" >> analysis-report.md
+        fi
+        echo "" >> analysis-report.md
+        
+        echo "### netlify.toml" >> analysis-report.md
+        if [ -f "netlify.toml" ]; then
+          echo "✅ **EXISTS**" >> analysis-report.md
+          echo "```toml" >> analysis-report.md
+          cat netlify.toml >> analysis-report.md
+          echo "```" >> analysis-report.md
+        else
+          echo "❌ **MISSING**" >> analysis-report.md
+        fi
+        echo "" >> analysis-report.md
+        
+    - name: 🚨 Conflict Detection
+      run: |
+        echo "## 🚨 POTENTIAL CONFLICTS DETECTION" >> analysis-report.md
+        echo "" >> analysis-report.md
+        
+        # Check for API routes with static export
+        if grep -q "output.*export" next.config.js 2>/dev/null && [ -d "app/api" ]; then
+          echo "❌ **CRITICAL CONFLICT**: Static export enabled but API routes exist" >> analysis-report.md
+          echo "- Location: app/api/" >> analysis-report.md
+          echo "- Solution: Remove API routes OR disable static export" >> analysis-report.md
+          echo "" >> analysis-report.md
+        fi
+        
+        # Check for package-lock.json if using npm ci
+        if grep -q "npm ci" .github/workflows/*.yml 2>/dev/null && [ ! -f "package-lock.json" ]; then
+          echo "❌ **DEPENDENCY CONFLICT**: Workflow uses 'npm ci' but no package-lock.json" >> analysis-report.md
+          echo "- Solution: Use 'npm install' OR generate package-lock.json" >> analysis-report.md
+          echo "" >> analysis-report.md
+        fi
+        
+        # Check for headers with static export
+        if grep -q "output.*export" next.config.js 2>/dev/null && grep -q "headers" next.config.js 2>/dev/null; then
+          echo "⚠️ **WARNING**: Custom headers with static export (limited functionality)" >> analysis-report.md
+          echo "" >> analysis-report.md
+        fi
+        
+        # Check publish directory consistency
+        NETLIFY_PUBLISH=$(grep "publish" netlify.toml 2>/dev/null | cut -d'"' -f2)
+        WORKFLOW_PUBLISH=$(grep "publish-dir" .github/workflows/*.yml 2>/dev/null | head -1 | cut -d"'" -f2)
+        if [ "$NETLIFY_PUBLISH" != "" ] && [ "$WORKFLOW_PUBLISH" != "" ] && [ "$NETLIFY_PUBLISH" != "$WORKFLOW_PUBLISH" ]; then
+          echo "❌ **CONFIGURATION MISMATCH**: Publish directories don't match" >> analysis-report.md
+          echo "- Netlify: $NETLIFY_PUBLISH" >> analysis-report.md
+          echo "- Workflow: $WORKFLOW_PUBLISH" >> analysis-report.md
+          echo "" >> analysis-report.md
+        fi
+        
+    - name: 📊 Dependencies Analysis
+      run: |
+        echo "## 📦 DEPENDENCIES ANALYSIS" >> analysis-report.md
+        echo "" >> analysis-report.md
+        
+        if [ -f "package.json" ]; then
+          echo "### Dependencies Status" >> analysis-report.md
+          npm install --dry-run 2>&1 | head -10 >> analysis-report.md || echo "Dependencies check failed" >> analysis-report.md
+          echo "" >> analysis-report.md
+        fi
+        
+    - name: 🎯 Deployment Readiness Check
+      run: |
+        echo "## 🚀 DEPLOYMENT READINESS" >> analysis-report.md
+        echo "" >> analysis-report.md
+        
+        # Check for build script
+        if grep -q '"build"' package.json; then
+          echo "✅ Build script exists" >> analysis-report.md
+        else
+          echo "❌ No build script found" >> analysis-report.md
+        fi
+        
+        # Check Node version consistency
+        PACKAGE_NODE=$(grep "node" package.json 2>/dev/null | head -1)
+        WORKFLOW_NODE=$(grep "node-version" .github/workflows/*.yml 2>/dev/null | head -1)
+        NETLIFY_NODE=$(grep "NODE_VERSION" netlify.toml 2>/dev/null)
+        
+        echo "### Node.js Version Consistency" >> analysis-report.md
+        echo "- Package.json: $PACKAGE_NODE" >> analysis-report.md
+        echo "- Workflow: $WORKFLOW_NODE" >> analysis-report.md
+        echo "- Netlify: $NETLIFY_NODE" >> analysis-report.md
+        echo "" >> analysis-report.md
+        
+    - name: 📋 Generate Action Plan
+      run: |
+        echo "## 📋 RECOMMENDED ACTION PLAN" >> analysis-report.md
+        echo "" >> analysis-report.md
+        echo "**Target Change**: ${{ github.event.inputs.target_change }}" >> analysis-report.md
+        echo "" >> analysis-report.md
+        
+        echo "### Before Making Changes:" >> analysis-report.md
+        echo "1. ✅ Review all conflicts identified above" >> analysis-report.md
+        echo "2. ✅ Backup current working configuration" >> analysis-report.md
+        echo "3. ✅ Plan rollback strategy" >> analysis-report.md
+        echo "4. ✅ Test changes in development first" >> analysis-report.md
+        echo "" >> analysis-report.md
+        
+        echo "### Critical Checkpoints:" >> analysis-report.md
+        echo "- [ ] Configuration files consistency" >> analysis-report.md
+        echo "- [ ] Dependencies compatibility" >> analysis-report.md
+        echo "- [ ] Build process validation" >> analysis-report.md
+        echo "- [ ] Deployment target alignment" >> analysis-report.md
+        echo "" >> analysis-report.md
+        
+    - name: 📤 Upload Analysis Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: pre-change-analysis-report
+        path: analysis-report.md
+        
+    - name: 💬 Comment Analysis Summary
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const report = fs.readFileSync('analysis-report.md', 'utf8');
+          
+          // Create an issue with the analysis
+          await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: `🔍 Pre-Change Analysis: ${{ github.event.inputs.target_change }}`,
+            body: `## Analysis Report\n\n${report}\n\n---\n**Triggered by**: @${{ github.actor }}\n**Analysis Type**: ${{ github.event.inputs.analysis_type }}\n**Timestamp**: ${new Date().toISOString()}`
+          });
