@@ -302,7 +302,7 @@ function SimulationContent() {
                                 Simulation Sécurisée avec Firebase
                             </h3>
                             <p className="text-green-200 mb-4">
-                                Vos simulations quantiques sont protégées par l'authentification Firebase. 
+                                Vos simulations quantiques sont protégées par l&apos;authentification Firebase. 
                                 Historique personnel sauvegardé pour {user?.email}.
                             </p>
                             <div className="flex space-x-4">
