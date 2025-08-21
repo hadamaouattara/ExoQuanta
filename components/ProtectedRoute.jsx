@@ -8,9 +8,16 @@ export default function ProtectedRoute({ children, fallback = null }) {
   const { user, loading } = useAuth()
   const router = useRouter()
   const [showContent, setShowContent] = useState(false)
+  const [timeoutReached, setTimeoutReached] = useState(false)
 
   useEffect(() => {
+    // Timeout de sécurité pour éviter le blocage infini
+    const timeout = setTimeout(() => {
+      setTimeoutReached(true)
+    }, 5000) // 5 secondes
+
     if (!loading) {
+      clearTimeout(timeout)
       if (!user) {
         // Rediriger vers la page d'accueil si non connecté
         router.push('/')
@@ -18,14 +25,23 @@ export default function ProtectedRoute({ children, fallback = null }) {
         setShowContent(true)
       }
     }
+
+    return () => clearTimeout(timeout)
   }, [user, loading, router])
 
-  if (loading) {
+  // Si timeout atteint, rediriger vers l'accueil
+  if (timeoutReached && loading) {
+    router.push('/')
+    return null
+  }
+
+  if (loading && !timeoutReached) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-white text-lg">Vérification de l'accès quantique...</p>
+          <p className="text-purple-300 text-sm mt-2">Initialisation de Firebase...</p>
         </div>
       </div>
     )
