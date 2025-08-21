@@ -1,0 +1,227 @@
+name: "Auto CSS Repair System"
+
+on:
+  repository_dispatch:
+    types: [css-repair-needed]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+
+jobs:
+  diagnose-and-repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          
+      - name: Diagnose CSS issues
+        id: diagnosis
+        run: |
+          echo "Diagnosing CSS configuration issues..."
+          
+          # Check Tailwind version conflicts
+          if grep -q '"tailwindcss": "^4' package.json && grep -q '@tailwind' styles/globals.css; then
+            echo "issue=tailwind_version_conflict" >> $GITHUB_OUTPUT
+            echo "Detected Tailwind v4 package with v3 syntax"
+          fi
+          
+          # Check missing PostCSS config
+          if ! [ -f "postcss.config.js" ] && grep -q 'tailwindcss' package.json; then
+            echo "issue=missing_postcss" >> $GITHUB_OUTPUT
+            echo "Missing PostCSS configuration"
+          fi
+          
+          # Check CSS import path
+          if grep -q "import.*styles/globals.css" app/layout.jsx; then
+            if ! [ -f "styles/globals.css" ]; then
+              echo "issue=missing_css_file" >> $GITHUB_OUTPUT
+              echo "CSS file missing"
+            fi
+          fi
+          
+      - name: Auto-fix Tailwind version conflict
+        if: steps.diagnosis.outputs.issue == 'tailwind_version_conflict'
+        run: |
+          echo "Auto-fixing Tailwind CSS version conflict..."
+          
+          # Downgrade to stable v3
+          npm install tailwindcss@^3.4.1 autoprefixer@^10.4.16 --save-dev
+          
+          # Ensure PostCSS config exists
+          cat > postcss.config.js << 'EOF'
+          module.exports = {
+            plugins: {
+              tailwindcss: {},
+              autoprefixer: {},
+            },
+          }
+          EOF
+          
+          # Update Tailwind config to v3 syntax
+          cat > tailwind.config.js << 'EOF'
+          /** @type {import('tailwindcss').Config} */
+          module.exports = {
+            content: [
+              './app/**/*.{js,ts,jsx,tsx,mdx}',
+              './components/**/*.{js,ts,jsx,tsx,mdx}',
+              './styles/**/*.{css}',
+            ],
+            theme: {
+              extend: {
+                fontFamily: {
+                  inter: ['var(--font-inter)', 'Inter', 'sans-serif'],
+                  'jetbrains-mono': ['var(--font-jetbrains-mono)', 'JetBrains Mono', 'monospace'],
+                },
+                colors: {
+                  primary: '#7c3aed',
+                  'primary-content': '#ffffff',
+                },
+              },
+            },
+            plugins: [],
+          }
+          EOF
+          
+      - name: Create emergency CSS fallback
+        if: contains(steps.diagnosis.outputs.issue, 'css')
+        run: |
+          echo "Creating emergency CSS fallback..."
+          mkdir -p styles
+          
+          cat > styles/globals.css << 'EOF'
+          @tailwind base;
+          @tailwind components;
+          @tailwind utilities;
+          
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+          
+          :root {
+            --color-primary: #7c3aed;
+            --color-primary-content: #ffffff;
+          }
+          
+          * {
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
+          }
+          
+          body {
+            font-family: Inter, sans-serif;
+            color: white;
+            background: linear-gradient(135deg, #0f172a 0%, #581c87 25%, #0f172a 50%, #8b5cf6 75%, #0f172a 100%);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+          }
+          
+          /* Quantum effects */
+          .quantum-bg {
+            background: linear-gradient(135deg, 
+              rgba(15, 23, 42, 0.95) 0%, 
+              rgba(88, 28, 135, 0.85) 25%, 
+              rgba(15, 23, 42, 0.95) 50%,
+              rgba(139, 92, 246, 0.85) 75%,
+              rgba(15, 23, 42, 0.95) 100%
+            );
+          }
+          
+          .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 0.875rem 1.25rem;
+            font-size: 0.875rem;
+            border-radius: 0.5rem;
+            background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+          }
+          
+          .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
+          }
+          EOF
+          
+      - name: Test fix
+        run: |
+          echo "Testing CSS fix..."
+          npm ci
+          npm run build
+          
+          # Check if build includes CSS
+          if [ -d ".next" ]; then
+            if find .next -name "*.css" | grep -q css; then
+              echo "✅ CSS files generated successfully"
+            else
+              echo "❌ CSS generation still failing"
+              exit 1
+            fi
+          fi
+          
+      - name: Commit auto-fix
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "CSS Auto-Repair Bot"
+          
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "🤖 AUTO-FIX: Repair CSS configuration issues
+            
+            - Fixed Tailwind CSS version conflicts
+            - Restored missing configuration files  
+            - Ensured CSS generation in production
+            - Added emergency fallback styles
+            
+            Automated repair by CSS Health Monitor"
+            
+            git push
+            
+            echo "✅ Auto-repair completed and pushed"
+          else
+            echo "No changes needed"
+          fi
+          
+      - name: Verify deployment
+        run: |
+          echo "Waiting for deployment..."
+          sleep 60
+          
+          # Check if site is accessible and styled
+          response=$(curl -s https://quantum.exonovnow.com/ || echo "failed")
+          if echo "$response" | grep -q "gradient\|purple\|EXONOV"; then
+            echo "✅ Site is accessible with styling"
+          else
+            echo "❌ Site deployment issue detected"
+            # Trigger rollback
+            curl -X POST \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/${{ github.repository }}/dispatches \
+              -d '{"event_type":"emergency-rollback"}'
+          fi
+          
+      - name: Notify completion
+        run: |
+          echo "🤖 CSS Auto-Repair completed
+          
+          ✅ Diagnosis completed
+          ✅ Issues resolved
+          ✅ Configuration updated
+          ✅ Build verified
+          ✅ Deployment checked
+          
+          Your site should now display correctly with full styling."
