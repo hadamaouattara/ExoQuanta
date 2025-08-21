@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import ProtectedRoute from '../../components/ProtectedRoute';
+import { useAuth } from '../../contexts/AuthContext';
 
-export default function QuantumSimulation() {
+function SimulationContent() {
+    const { user } = useAuth();
     const [qubits, setQubits] = useState(3);
     const [isRunning, setIsRunning] = useState(false);
     const [results, setResults] = useState([]);
@@ -52,7 +55,8 @@ export default function QuantumSimulation() {
                 timestamp: new Date(),
                 algorithm,
                 qubits,
-                results: sortedResults.slice(0, 3)
+                results: sortedResults.slice(0, 3),
+                user: user?.email || 'Utilisateur'
             };
             setSimulationHistory(prev => [historyEntry, ...prev.slice(0, 4)]);
             
@@ -62,7 +66,7 @@ export default function QuantumSimulation() {
 
     const getAlgorithmDescription = (algo) => {
         const descriptions = {
-            hadamard: "Créé une superposition égale de tous les états quantiques",
+            hadamard: "Crée une superposition égale de tous les états quantiques",
             grover: "Recherche quantique avec amplification de probabilité",
             shor: "Factorisation de nombres entiers (version simplifiée)",
             teleportation: "Transfert d'état quantique via intrication",
@@ -96,6 +100,11 @@ export default function QuantumSimulation() {
                                 Accueil
                             </Link>
                         </nav>
+                        <div className="flex items-center space-x-4">
+                            <div className="text-purple-300 text-sm">
+                                Session : {user?.displayName || user?.email || 'Quantum User'}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -103,11 +112,14 @@ export default function QuantumSimulation() {
             <div className="container mx-auto px-6 py-12 relative z-10">
                 <div className="mb-12 text-center">
                     <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                        Simulateur Quantique
+                        Simulateur Quantique Sécurisé
                     </h1>
                     <p className="text-xl text-purple-200">
-                        Explorez les algorithmes quantiques avec notre moteur de simulation avancé
+                        Explorez les algorithmes quantiques avec authentification Firebase
                     </p>
+                    <div className="mt-4 inline-block bg-green-500/20 border border-green-500/50 rounded-lg px-4 py-2">
+                        <span className="text-green-300 text-sm">Accès autorisé pour : {user?.email}</span>
+                    </div>
                 </div>
 
                 <div className="grid lg:grid-cols-3 gap-8">
@@ -161,10 +173,10 @@ export default function QuantumSimulation() {
                                 {isRunning ? (
                                     <div className="flex items-center justify-center space-x-2">
                                         <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
-                                        <span>Calcul en cours...</span>
+                                        <span>Calcul quantique...</span>
                                     </div>
                                 ) : (
-                                    '⚛️ Lancer la Simulation'
+                                    'Lancer la Simulation'
                                 )}
                             </button>
                         </div>
@@ -202,7 +214,7 @@ export default function QuantumSimulation() {
                                 </div>
                             ) : results.length > 0 ? (
                                 <div className="space-y-4">
-                                    {results.map((result, index) => (
+                                    {results.slice(0, 8).map((result, index) => (
                                         <div 
                                             key={result.state}
                                             className="bg-black/50 border border-purple-500/30 rounded-lg p-4 hover:border-purple-400/50 transition-colors"
@@ -255,7 +267,7 @@ export default function QuantumSimulation() {
 
                         {simulationHistory.length > 0 && (
                             <div className="bg-black/30 backdrop-blur-lg border border-cyan-500/50 rounded-xl p-6">
-                                <h3 className="text-xl font-bold text-cyan-300 mb-4">Historique des Simulations</h3>
+                                <h3 className="text-xl font-bold text-cyan-300 mb-4">Historique Personnel</h3>
                                 <div className="space-y-3">
                                     {simulationHistory.map((entry, index) => (
                                         <div key={index} className="bg-black/50 border border-cyan-500/30 rounded-lg p-3">
@@ -282,23 +294,23 @@ export default function QuantumSimulation() {
                     </div>
                 </div>
 
-                <div className="mt-12 bg-black/30 backdrop-blur-lg border border-yellow-500/50 rounded-xl p-6">
+                <div className="mt-12 bg-black/30 backdrop-blur-lg border border-green-500/50 rounded-xl p-6">
                     <div className="flex items-center space-x-4">
-                        <div className="text-yellow-400 text-2xl">🔗</div>
+                        <div className="text-green-400 text-2xl">🔐</div>
                         <div>
-                            <h3 className="text-yellow-300 font-semibold text-lg mb-2">
-                                Intégration avec n8n Workflows
+                            <h3 className="text-green-300 font-semibold text-lg mb-2">
+                                Simulation Sécurisée avec Firebase
                             </h3>
-                            <p className="text-yellow-200 mb-4">
-                                Les simulations sont connectées à vos workflows n8n quantiques pour un traitement avancé 
-                                et une analyse en temps réel des résultats.
+                            <p className="text-green-200 mb-4">
+                                Vos simulations quantiques sont protégées par l'authentification Firebase. 
+                                Historique personnel sauvegardé pour {user?.email}.
                             </p>
                             <div className="flex space-x-4">
                                 <Link 
                                     href="/dashboard"
-                                    className="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                                    className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
                                 >
-                                    📊 Voir Dashboard
+                                    Voir Dashboard
                                 </Link>
                             </div>
                         </div>
@@ -306,5 +318,13 @@ export default function QuantumSimulation() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function QuantumSimulation() {
+    return (
+        <ProtectedRoute>
+            <SimulationContent />
+        </ProtectedRoute>
     );
 }
