@@ -1,0 +1,167 @@
+name: "Deployment Cleanup & Optimization"
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+  workflow_dispatch:
+    inputs:
+      cleanup_age_hours:
+        description: 'Cancel workflows older than X hours'
+        required: false
+        default: '2'
+
+jobs:
+  cleanup-redundant-runs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel redundant workflow runs
+        run: |
+          echo "Cleaning up redundant workflow runs..."
+          
+          # Get recent workflow runs
+          runs=$(curl -s \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs?status=queued&status=in_progress&per_page=50")
+          
+          # Cancel runs that are queued/running for same commit
+          echo "$runs" | jq -r '.workflow_runs[] | select(.status == "queued" or .status == "in_progress") | [.id, .head_sha] | @tsv' | \
+          while IFS=$'\t' read -r run_id commit_sha; do
+            # Count how many runs exist for this commit
+            count=$(echo "$runs" | jq "[.workflow_runs[] | select(.head_sha == \"$commit_sha\")] | length")
+            
+            if [ "$count" -gt 1 ]; then
+              echo "Cancelling redundant run $run_id for commit $commit_sha"
+              curl -X POST \
+                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                "https://api.github.com/repos/${{ github.repository }}/actions/runs/$run_id/cancel"
+            fi
+          done
+          
+      - name: Clean old workflow runs
+        run: |
+          echo "Cleaning up old workflow runs..."
+          
+          cutoff_hours="${{ github.event.inputs.cleanup_age_hours || '2' }}"
+          cutoff_date=$(date -d "$cutoff_hours hours ago" -u +"%Y-%m-%dT%H:%M:%SZ")
+          
+          # Get old runs
+          old_runs=$(curl -s \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs?created=<$cutoff_date&status=queued&per_page=50")
+          
+          # Cancel old queued runs
+          echo "$old_runs" | jq -r '.workflow_runs[]? | select(.status == "queued") | .id' | \
+          while read -r run_id; do
+            if [ -n "$run_id" ]; then
+              echo "Cancelling old queued run $run_id"
+              curl -X POST \
+                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                "https://api.github.com/repos/${{ github.repository }}/actions/runs/$run_id/cancel"
+            fi
+          done
+
+  optimize-future-deployments:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Analyze deployment patterns
+        run: |
+          echo "Analyzing recent deployment patterns..."
+          
+          # Get recent deployments
+          deployments=$(curl -s \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/deploy.yml/runs?per_page=20")
+          
+          # Calculate deployment frequency
+          total_runs=$(echo "$deployments" | jq '.total_count')
+          recent_runs=$(echo "$deployments" | jq '.workflow_runs | length')
+          
+          echo "Total deployment runs: $total_runs"
+          echo "Recent runs analyzed: $recent_runs"
+          
+          # Check for excessive frequency
+          if [ "$recent_runs" -gt 10 ]; then
+            echo "WARNING: High deployment frequency detected"
+            echo "Consider batching changes or using draft PRs"
+          fi
+          
+      - name: Generate optimization recommendations
+        run: |
+          cat > deployment-optimization.md << 'EOF'
+          # Deployment Optimization Report
+          
+          Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          
+          ## Current Status
+          - Intelligent deployment system: ✅ Active
+          - Rate limiting: ✅ 5-minute minimum intervals
+          - Change significance analysis: ✅ Active
+          - Smoke tests: ✅ Required
+          
+          ## Optimization Features
+          - **Smart filtering**: Ignores workflow changes, docs, and minor updates
+          - **Concurrency control**: Cancels outdated runs automatically
+          - **Validation gates**: Build tests required before deployment
+          - **Frequency limits**: Prevents deployment spam
+          
+          ## Best Practices
+          1. Use draft PRs for experimental changes
+          2. Batch related changes in single commits
+          3. Use `[skip ci]` in commit messages for docs-only changes
+          4. Force deployments only when necessary
+          
+          ## Emergency Options
+          - Force deployment: Use workflow_dispatch with force_deploy=true
+          - Skip tests: Use skip_tests=true (not recommended)
+          - Manual cleanup: Run this workflow manually
+          EOF
+          
+          echo "Optimization report generated"
+
+  health-metrics-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          
+      - name: Generate health summary
+        run: |
+          echo "Generating deployment health summary..."
+          
+          # Check recent deployment success rate
+          recent_deployments=$(curl -s \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/deploy.yml/runs?per_page=10")
+          
+          successful=$(echo "$recent_deployments" | jq '[.workflow_runs[] | select(.conclusion == "success")] | length')
+          total=$(echo "$recent_deployments" | jq '.workflow_runs | length')
+          
+          if [ "$total" -gt 0 ]; then
+            success_rate=$(( successful * 100 / total ))
+            echo "Recent deployment success rate: $success_rate% ($successful/$total)"
+            
+            if [ "$success_rate" -lt 80 ]; then
+              echo "WARNING: Low success rate detected"
+            else
+              echo "Deployment health: Good"
+            fi
+          fi
+          
+      - name: Update system status
+        run: |
+          mkdir -p .github/system-health
+          
+          cat > .github/system-health/deployment-status.json << EOF
+          {
+            "last_cleanup": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+            "cleanup_reason": "Scheduled maintenance",
+            "intelligent_deployment": "active",
+            "rate_limiting": "active",
+            "monitoring": "active"
+          }
+          EOF
+          
+          echo "System status updated"
