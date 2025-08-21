@@ -1,0 +1,135 @@
+name: 🛡️ Configuration Guard
+
+on:
+  push:
+    paths:
+      - 'next.config.js'
+      - 'package.json'
+      - 'netlify.toml'
+      - '.github/workflows/*.yml'
+  pull_request:
+    paths:
+      - 'next.config.js'
+      - 'package.json'
+      - 'netlify.toml'
+      - '.github/workflows/*.yml'
+
+jobs:
+  configuration-guard:
+    runs-on: ubuntu-latest
+    name: 🛡️ Validate Configuration Changes
+    
+    steps:
+    - name: 📦 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2  # Need previous commit for comparison
+      
+    - name: 🔍 Detect Critical Conflicts
+      id: conflict-check
+      run: |
+        echo "🔍 Checking for critical configuration conflicts..."
+        
+        CONFLICTS=""
+        
+        # Check 1: Static export with API routes
+        if grep -q "output.*['\"]export['\"]" next.config.js 2>/dev/null; then
+          if [ -d "app/api" ] && [ "$(find app/api -name "*.js" -o -name "*.ts" | wc -l)" -gt 0 ]; then
+            CONFLICTS="$CONFLICTS❌ CRITICAL: Static export enabled but API routes exist\n"
+          fi
+        fi
+        
+        # Check 2: npm ci without package-lock.json
+        if grep -q "npm ci" .github/workflows/*.yml 2>/dev/null; then
+          if [ ! -f "package-lock.json" ]; then
+            CONFLICTS="$CONFLICTS❌ CRITICAL: Workflow uses 'npm ci' but package-lock.json missing\n"
+          fi
+        fi
+        
+        # Check 3: Publish directory mismatch
+        NETLIFY_PUBLISH=$(grep "publish" netlify.toml 2>/dev/null | sed 's/.*=.*"\(.*\)".*/\1/')
+        WORKFLOW_PUBLISH=$(grep "publish-dir" .github/workflows/*.yml 2>/dev/null | head -1 | sed "s/.*publish-dir.*['\"]\\([^'\"]*\\)['\"].*/\\1/")
+        
+        if [ "$NETLIFY_PUBLISH" != "" ] && [ "$WORKFLOW_PUBLISH" != "" ]; then
+          if [ "$NETLIFY_PUBLISH" != "$WORKFLOW_PUBLISH" ]; then
+            CONFLICTS="$CONFLICTS❌ CRITICAL: Publish directory mismatch (Netlify: $NETLIFY_PUBLISH, Workflow: $WORKFLOW_PUBLISH)\n"
+          fi
+        fi
+        
+        # Check 4: Headers with static export
+        if grep -q "output.*['\"]export['\"]" next.config.js 2>/dev/null; then
+          if grep -q "headers" next.config.js 2>/dev/null; then
+            CONFLICTS="$CONFLICTS⚠️ WARNING: Custom headers with static export (limited functionality)\n"
+          fi
+        fi
+        
+        if [ "$CONFLICTS" != "" ]; then
+          echo "has_conflicts=true" >> $GITHUB_OUTPUT
+          echo -e "conflicts<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$CONFLICTS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        else
+          echo "has_conflicts=false" >> $GITHUB_OUTPUT
+          echo "✅ No critical conflicts detected"
+        fi
+        
+    - name: 📊 Generate Compatibility Report
+      run: |
+        echo "# 🛡️ Configuration Compatibility Report" > compatibility-report.md
+        echo "" >> compatibility-report.md
+        echo "**Commit**: ${{ github.sha }}" >> compatibility-report.md
+        echo "**Branch**: ${{ github.ref_name }}" >> compatibility-report.md
+        echo "**Triggered by**: @${{ github.actor }}" >> compatibility-report.md
+        echo "" >> compatibility-report.md
+        
+        if [ "${{ steps.conflict-check.outputs.has_conflicts }}" == "true" ]; then
+          echo "## 🚨 CONFLICTS DETECTED" >> compatibility-report.md
+          echo "" >> compatibility-report.md
+          echo -e "${{ steps.conflict-check.outputs.conflicts }}" >> compatibility-report.md
+          echo "" >> compatibility-report.md
+          echo "## 🔧 RECOMMENDED ACTIONS" >> compatibility-report.md
+          echo "" >> compatibility-report.md
+          echo "1. **STOP** - Do not merge this PR until conflicts are resolved" >> compatibility-report.md
+          echo "2. **ANALYZE** - Review each conflict listed above" >> compatibility-report.md
+          echo "3. **FIX** - Apply necessary corrections" >> compatibility-report.md
+          echo "4. **TEST** - Run pre-change analysis workflow" >> compatibility-report.md
+          echo "5. **VALIDATE** - Ensure build passes locally" >> compatibility-report.md
+        else
+          echo "## ✅ CONFIGURATION VALIDATION PASSED" >> compatibility-report.md
+          echo "" >> compatibility-report.md
+          echo "No critical conflicts detected in configuration changes." >> compatibility-report.md
+          echo "" >> compatibility-report.md
+          echo "### Changed Files Analysis:" >> compatibility-report.md
+          git diff --name-only HEAD^ HEAD >> compatibility-report.md
+        fi
+        
+    - name: 💬 Comment on PR (if applicable)
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const report = fs.readFileSync('compatibility-report.md', 'utf8');
+          
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: report
+          });
+          
+    - name: 🚨 Fail on Critical Conflicts
+      if: steps.conflict-check.outputs.has_conflicts == 'true'
+      run: |
+        echo "::error::Critical configuration conflicts detected!"
+        echo "::error::${{ steps.conflict-check.outputs.conflicts }}"
+        echo ""
+        echo "🛑 Build stopped to prevent deployment issues."
+        echo "📋 Please review the compatibility report and fix conflicts before proceeding."
+        exit 1
+        
+    - name: ✅ Configuration Approved
+      if: steps.conflict-check.outputs.has_conflicts == 'false'
+      run: |
+        echo "✅ Configuration changes validated successfully!"
+        echo "🚀 Safe to proceed with deployment."
