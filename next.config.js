@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // Configuration serverless pour Netlify avec Firebase Auth
-    output: undefined, // Retour au mode serverless
+    // Configuration pour Firebase Auth (nécessite serverless)
+    output: undefined, // Suppression du static export pour Firebase Auth
     trailingSlash: true,
     images: {
         unoptimized: true,
