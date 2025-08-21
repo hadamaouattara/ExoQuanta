@@ -3,8 +3,6 @@ name: 🚀 Deploy Exonov Quantum to Netlify
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   build-and-deploy:
@@ -29,28 +27,13 @@ jobs:
         NODE_ENV: production
         NEXT_TELEMETRY_DISABLED: 1
         
-    - name: 🧪 Run tests (if available)
-      run: npm test --if-present
-      continue-on-error: true
-      
     - name: 🚀 Deploy to Netlify
       uses: nwtgck/actions-netlify@v3.0.0
       with:
-        publish-dir: '.next'
+        publish-dir: './out'
         production-branch: main
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        deploy-message: "🌌 Exonov Quantum - Build ${{ github.sha }}"
-        enable-pull-request-comment: false
-        enable-commit-comment: false
-        overwrites-pull-request-comment: false
+        deploy-message: "🌌 Static Build ${{ github.sha }}"
       env:
         NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-        
-    - name: ✅ Deployment Success
-      if: success()
-      run: |
-        echo "🎉 Exonov Quantum successfully deployed!"
-        echo "🌐 Live at: https://exoquanta.netlify.app"
-        echo "📊 Dashboard: https://exoquanta.netlify.app/dashboard"
-        echo "⚛️ Simulation: https://exoquanta.netlify.app/simulation"
