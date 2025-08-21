@@ -1,14 +1,35 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    output: 'export',
+    // Retiré output: 'export' pour permettre les routes API
     trailingSlash: true,
     images: {
         unoptimized: true,
     },
-    // Désactiver les fonctionnalités qui ne fonctionnent pas en mode static
+    // Configuration optimisée pour Netlify
     poweredByHeader: false,
     reactStrictMode: true,
-    // swcMinify retiré - obsolète dans Next.js 15
+    // Optimisations pour le build
+    experimental: {
+        optimizeCss: true,
+    },
+    // Headers de sécurité
+    async headers() {
+        return [
+            {
+                source: '/(.*)',
+                headers: [
+                    {
+                        key: 'X-Frame-Options',
+                        value: 'DENY',
+                    },
+                    {
+                        key: 'X-Content-Type-Options',
+                        value: 'nosniff',
+                    },
+                ],
+            },
+        ];
+    },
 }
 
 module.exports = nextConfig
