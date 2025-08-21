@@ -34,13 +34,13 @@ export default function ExonovQuantumHome() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="min-h-screen">
             <NavBar />
 
-            {/* 🚀 DEPLOY SUCCESS BANNER */}
+            {/* CSS DEPLOYMENT SUCCESS BANNER */}
             <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50">
                 <div className="bg-gradient-to-r from-green-500 to-cyan-500 text-white px-6 py-2 rounded-full font-semibold animate-pulse shadow-lg">
-                    ✅ DEPLOY READY - All ESLint Errors Fixed!
+                    🎨 CSS ENHANCED - Quantum Styling Active!
                 </div>
             </div>
 
@@ -49,8 +49,7 @@ export default function ExonovQuantumHome() {
                     {/* Message de bienvenue personnalisé */}
                     {user && (
                         <div className="mb-8">
-                            <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 backdrop-blur-lg 
-                                          border border-purple-500/50 rounded-xl p-4 max-w-md mx-auto">
+                            <div className="quantum-card max-w-md mx-auto">
                                 <p className="text-purple-200">
                                     Bienvenue, <span className="text-white font-semibold">{user.displayName || 'Scientifique Quantique'}</span> ! 
                                     🔬
@@ -59,20 +58,20 @@ export default function ExonovQuantumHome() {
                         </div>
                     )}
 
-                    <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
+                    <h1 className="text-5xl lg:text-6xl font-bold mb-6 text-purple-300">
                         EXONOV
                     </h1>
-                    <h2 className="text-4xl md:text-6xl font-bold mb-8 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                    <h2 className="text-4xl lg:text-5xl font-bold mb-8 text-cyan-400">
                         QUANTUM
                     </h2>
                     
-                    <p className="text-xl md:text-2xl text-purple-200 mb-12 max-w-4xl mx-auto leading-relaxed">
-                        ✅ <span className="text-green-400 font-bold">PRODUCTION READY</span> - Plateforme révolutionnaire de simulation quantique. 
+                    <p className="text-xl md:text-2xl text-purple-200 mb-12 max-w-4xl mx-auto">
+                        🎨 <span className="text-green-400 font-bold">CSS ENHANCED</span> - Plateforme révolutionnaire de simulation quantique. 
                         Explorez les mystères de la physique quantique avec des outils de pointe.
                     </p>
 
                     <div className="mb-12">
-                        <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-2xl p-8 max-w-md mx-auto">
+                        <div className="quantum-card max-w-md mx-auto">
                             <h3 className="text-purple-300 text-lg mb-4">État Quantique Actuel</h3>
                             <div className="text-3xl font-mono text-cyan-400 mb-2">
                                 {quantumStates[quantumState]}
@@ -87,21 +86,14 @@ export default function ExonovQuantumHome() {
                         <button 
                             onClick={simulateQuantum}
                             disabled={isSimulating}
-                            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 
-                                     disabled:opacity-50 disabled:cursor-not-allowed
-                                     text-white font-bold py-4 px-8 rounded-xl text-lg
-                                     transform hover:scale-105 transition-all duration-300
-                                     shadow-lg hover:shadow-purple-500/25"
+                            className="btn"
                         >
                             {isSimulating ? '🌀 Simulation en cours...' : '⚛️ Démarrer Simulation'}
                         </button>
                         
                         <Link 
                             href="/dashboard" 
-                            className="bg-black/50 backdrop-blur-lg border border-purple-500/50 
-                                     text-purple-300 font-bold py-4 px-8 rounded-xl text-lg
-                                     hover:bg-purple-900/30 hover:border-purple-400
-                                     transform hover:scale-105 transition-all duration-300"
+                            className="btn"
                         >
                             🔬 Dashboard n8n
                         </Link>
@@ -111,12 +103,12 @@ export default function ExonovQuantumHome() {
 
             <section id="features" className="py-20 px-6">
                 <div className="container mx-auto">
-                    <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                    <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-cyan-400">
                         Fonctionnalités Quantiques
                     </h2>
                     
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6 hover:border-purple-400/70 transition-all duration-300">
+                        <div className="quantum-card">
                             <h3 className="text-xl font-bold text-purple-300 mb-4">🔬 Simulation Multi-Qubits</h3>
                             <p className="text-purple-200">
                                 Simulez des systèmes quantiques complexes avec jusqu&apos;à 8 qubits.
@@ -124,7 +116,7 @@ export default function ExonovQuantumHome() {
                             </p>
                         </div>
 
-                        <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6 hover:border-purple-400/70 transition-all duration-300">
+                        <div className="quantum-card">
                             <h3 className="text-xl font-bold text-purple-300 mb-4">🌀 Algorithmes Quantiques</h3>
                             <p className="text-purple-200">
                                 Implémentez Shor, Grover, Hadamard et d&apos;autres algorithmes quantiques
@@ -132,7 +124,7 @@ export default function ExonovQuantumHome() {
                             </p>
                         </div>
 
-                        <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6 hover:border-purple-400/70 transition-all duration-300">
+                        <div className="quantum-card">
                             <h3 className="text-xl font-bold text-purple-300 mb-4">📊 Dashboard n8n</h3>
                             <p className="text-purple-200">
                                 Contrôlez et surveillez vos 13+ workflows quantiques n8n
@@ -140,7 +132,7 @@ export default function ExonovQuantumHome() {
                             </p>
                         </div>
 
-                        <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6 hover:border-purple-400/70 transition-all duration-300">
+                        <div className="quantum-card">
                             <h3 className="text-xl font-bold text-purple-300 mb-4">⚡ API Bridge</h3>
                             <p className="text-purple-200">
                                 Connexion transparente avec votre instance n8n pour
@@ -148,7 +140,7 @@ export default function ExonovQuantumHome() {
                             </p>
                         </div>
 
-                        <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6 hover:border-purple-400/70 transition-all duration-300">
+                        <div className="quantum-card">
                             <h3 className="text-xl font-bold text-purple-300 mb-4">🔐 Authentification Sécurisée</h3>
                             <p className="text-purple-200">
                                 Connexion sécurisée avec Firebase. Support Google, GitHub
@@ -156,7 +148,7 @@ export default function ExonovQuantumHome() {
                             </p>
                         </div>
 
-                        <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6 hover:border-purple-400/70 transition-all duration-300">
+                        <div className="quantum-card">
                             <h3 className="text-xl font-bold text-purple-300 mb-4">🛡️ Quality Gate Actif</h3>
                             <p className="text-purple-200">
                                 ✅ Système d&apos;automatisation universel avec validation syntaxe,
@@ -167,15 +159,14 @@ export default function ExonovQuantumHome() {
                 </div>
             </section>
 
-            <section className="py-16 px-6 bg-black/20">
+            <section className="py-16 px-6 bg-black/30">
                 <div className="container mx-auto text-center">
                     <h2 className="text-3xl font-bold mb-8 text-purple-300">
                         État du Système
                     </h2>
                     
                     {isSimulating && (
-                        <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 
-                                      border border-purple-500/50 rounded-xl p-6 mb-8 max-w-md mx-auto">
+                        <div className="quantum-card mb-8 max-w-md mx-auto">
                             <div className="text-2xl mb-4">🌀</div>
                             <div className="text-purple-200">
                                 Simulation quantique en cours...
@@ -186,23 +177,23 @@ export default function ExonovQuantumHome() {
                         </div>
                     )}
 
-                    <div className="grid md:grid-cols-4 gap-6 max-w-5xl mx-auto">
-                        <div className="bg-black/30 backdrop-blur-lg border border-green-500/50 rounded-xl p-6">
-                            <div className="text-green-400 text-2xl mb-2">✅</div>
-                            <div className="text-green-300 font-semibold">Deploy Success</div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
+                        <div className="quantum-card">
+                            <div className="text-green-400 text-2xl mb-2">🎨</div>
+                            <div className="text-green-300 font-semibold">CSS Enhanced</div>
                         </div>
                         
-                        <div className="bg-black/30 backdrop-blur-lg border border-blue-500/50 rounded-xl p-6">
+                        <div className="quantum-card">
                             <div className="text-blue-400 text-2xl mb-2">🛡️</div>
-                            <div className="text-blue-300 font-semibold">Quality Gate Actif</div>
+                            <div className="text-blue-300 font-semibold">Quality Gate</div>
                         </div>
                         
-                        <div className="bg-black/30 backdrop-blur-lg border border-purple-500/50 rounded-xl p-6">
+                        <div className="quantum-card">
                             <div className="text-purple-400 text-2xl mb-2">🔮</div>
                             <div className="text-purple-300 font-semibold">n8n Intégré</div>
                         </div>
 
-                        <div className="bg-black/30 backdrop-blur-lg border border-orange-500/50 rounded-xl p-6">
+                        <div className="quantum-card">
                             <div className="text-orange-400 text-2xl mb-2">🔥</div>
                             <div className="text-orange-300 font-semibold">Firebase Auth</div>
                         </div>
@@ -213,7 +204,7 @@ export default function ExonovQuantumHome() {
             <footer className="bg-black/50 backdrop-blur-lg border-t border-purple-500/30 py-12 px-6">
                 <div className="container mx-auto text-center">
                     <div className="text-purple-300 mb-4">
-                        ✅ Powered by Universal Automation System + Firebase + GitHub Actions
+                        🎨 Enhanced with Quantum CSS System + Intelligent Automation
                     </div>
                     <div className="text-purple-500 text-sm">
                         © 2025 Exonov Quantum. Révolutionnant la physique quantique.
