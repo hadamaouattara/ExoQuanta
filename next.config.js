@@ -13,11 +13,6 @@ const nextConfig = {
         return `build-${Date.now()}`;
     },
     
-    // Optimisations pour le build
-    experimental: {
-        optimizeCss: true,
-    },
-    
     // Headers de sécurité et cache control
     async headers() {
         return [
