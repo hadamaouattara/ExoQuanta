@@ -63,7 +63,7 @@ const AuthModal = ({ isOpen, onClose, mode = 'signin' }) => {
       case 'auth/weak-password':
         return 'Le mot de passe doit contenir au moins 6 caractères.';
       case 'auth/invalid-email':
-        return "Format d'email invalide.";
+        return "Format d&apos;email invalide.";
       case 'auth/popup-closed-by-user':
         return 'Connexion annulée.';
       default:
@@ -133,7 +133,7 @@ const AuthModal = ({ isOpen, onClose, mode = 'signin' }) => {
           {authMode === 'signup' && (
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Nom d'utilisateur
+                Nom d&apos;utilisateur
               </label>
               <input
                 type="text"
@@ -193,7 +193,7 @@ const AuthModal = ({ isOpen, onClose, mode = 'signin' }) => {
                 </span>
               </div>
             ) : (
-              authMode === 'signin' ? 'Se connecter' : "S'inscrire"
+              authMode === 'signin' ? 'Se connecter' : "S&apos;inscrire"
             )}
           </button>
         </form>
@@ -208,7 +208,7 @@ const AuthModal = ({ isOpen, onClose, mode = 'signin' }) => {
             className="text-purple-400 hover:text-purple-300 text-sm transition-colors"
           >
             {authMode === 'signin' 
-              ? "Pas encore de compte ? S'inscrire" 
+              ? "Pas encore de compte ? S&apos;inscrire" 
               : 'Déjà un compte ? Se connecter'
             }
           </button>
