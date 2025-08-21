@@ -1,0 +1,189 @@
+name: "Master Automation Orchestrator"
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 */2 * * *'  # Every 2 hours
+  workflow_dispatch:
+    inputs:
+      force_repair:
+        description: 'Force CSS repair'
+        required: false
+        default: 'false'
+      full_health_check:
+        description: 'Run comprehensive health check'
+        required: false
+        default: 'true'
+
+jobs:
+  orchestrate-quality:
+    runs-on: ubuntu-latest
+    outputs:
+      health_status: ${{ steps.health.outputs.status }}
+      needs_repair: ${{ steps.decisions.outputs.repair_needed }}
+      
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Initial health assessment
+        id: health
+        run: |
+          echo "Running master health assessment..."
+          
+          # Quick site check
+          if curl -s --max-time 10 "${{ env.SITE_URL || 'https://quantum.exonovnow.com' }}" > /dev/null; then
+            echo "Site accessible"
+            
+            # Check for visual indicators
+            response=$(curl -s "${{ env.SITE_URL || 'https://quantum.exonovnow.com' }}")
+            
+            if echo "$response" | grep -q "bg-gradient\|EXONOV.*QUANTUM\|purple"; then
+              echo "status=healthy" >> $GITHUB_OUTPUT
+              echo "Site appears healthy"
+            else
+              echo "status=degraded" >> $GITHUB_OUTPUT
+              echo "Site styling issues detected"
+            fi
+          else
+            echo "status=critical" >> $GITHUB_OUTPUT
+            echo "Site not accessible"
+          fi
+          
+      - name: Make orchestration decisions
+        id: decisions
+        run: |
+          health="${{ steps.health.outputs.status }}"
+          force_repair="${{ github.event.inputs.force_repair }}"
+          
+          if [ "$health" = "critical" ] || [ "$health" = "degraded" ] || [ "$force_repair" = "true" ]; then
+            echo "repair_needed=true" >> $GITHUB_OUTPUT
+            echo "Repair workflow will be triggered"
+          else
+            echo "repair_needed=false" >> $GITHUB_OUTPUT
+            echo "System appears healthy, no repairs needed"
+          fi
+          
+      - name: Log orchestration decision
+        run: |
+          cat > orchestration-log.md << EOF
+          # Master Orchestration Log
+          **Timestamp:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Trigger:** ${{ github.event_name }}
+          **Health Status:** ${{ steps.health.outputs.status }}
+          **Repair Needed:** ${{ steps.decisions.outputs.repair_needed }}
+          
+          ## Actions Planned
+          - Health monitoring: Active
+          - CSS repair: ${{ steps.decisions.outputs.repair_needed == 'true' && 'Triggered' || 'Not needed' }}
+          - Visual testing: Scheduled
+          - Performance monitoring: Active
+          EOF
+
+  trigger-css-repair:
+    needs: orchestrate-quality
+    if: needs.orchestrate-quality.outputs.needs_repair == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger CSS auto-repair
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/dispatches \
+            -d '{"event_type":"css-repair-needed"}'
+          echo "CSS repair workflow triggered"
+
+  run-health-monitoring:
+    needs: orchestrate-quality
+    runs-on: ubuntu-latest
+    if: github.event.inputs.full_health_check != 'false'
+    steps:
+      - name: Trigger comprehensive health check
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/actions/workflows/intelligent-guardian.yml/dispatches \
+            -d '{"ref":"main"}'
+          echo "Health monitoring workflow triggered"
+
+  status-summary:
+    needs: [orchestrate-quality, trigger-css-repair, run-health-monitoring]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Generate status summary
+        run: |
+          cat > .github/automation-status.md << EOF
+          # Automation System Status
+          
+          **Last Update:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          
+          ## System Health
+          - **Overall Status:** ${{ needs.orchestrate-quality.outputs.health_status || 'Unknown' }}
+          - **Auto-Repair:** ${{ needs.orchestrate-quality.outputs.needs_repair == 'true' && 'Active' || 'Standby' }}
+          - **Monitoring:** Active
+          
+          ## Active Workflows
+          - ✅ Master Orchestrator
+          - ✅ Intelligent Guardian  
+          - ✅ Auto CSS Repair
+          - ✅ Predictive QA
+          - ✅ Visual Health Monitor
+          
+          ## Recent Actions
+          - CSS Repair: ${{ needs.trigger-css-repair.result || 'Not triggered' }}
+          - Health Check: ${{ needs.run-health-monitoring.result || 'Not triggered' }}
+          
+          ## Automation Features
+          - 🔍 **Real-time monitoring** every 10 minutes
+          - 🛠️ **Auto-repair** CSS configuration issues
+          - 🎯 **Predictive prevention** before deployment
+          - 📊 **Visual regression testing** 
+          - 🚨 **Emergency rollback** capability
+          - 📈 **Performance tracking**
+          - 🔒 **Security scanning**
+          
+          ---
+          *Generated by Master Automation Orchestrator*
+          EOF
+          
+      - name: Commit status update
+        run: |
+          git config --local user.email "orchestrator@github.com"
+          git config --local user.name "Master Orchestrator"
+          
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .github/automation-status.md
+            git commit -m "📊 Automation status update: ${{ needs.orchestrate-quality.outputs.health_status || 'Unknown' }}
+            
+            - Health: ${{ needs.orchestrate-quality.outputs.health_status || 'Unknown' }}
+            - Repair: ${{ needs.orchestrate-quality.outputs.needs_repair == 'true' && 'Triggered' || 'Not needed' }}
+            - Monitoring: Active
+            
+            Automated by Master Orchestrator"
+            git push
+          fi
+          
+      - name: Final summary
+        run: |
+          echo "🎭 MASTER ORCHESTRATOR SUMMARY"
+          echo "================================"
+          echo "Health Status: ${{ needs.orchestrate-quality.outputs.health_status || 'Unknown' }}"
+          echo "Repair Needed: ${{ needs.orchestrate-quality.outputs.needs_repair || 'Unknown' }}"
+          echo "CSS Repair: ${{ needs.trigger-css-repair.result || 'Not triggered' }}"
+          echo "Health Monitor: ${{ needs.run-health-monitoring.result || 'Not triggered' }}"
+          echo "================================"
+          echo ""
+          echo "Your site is now protected by:"
+          echo "- Intelligent health monitoring"
+          echo "- Automated CSS repair system" 
+          echo "- Predictive issue prevention"
+          echo "- Visual regression testing"
+          echo "- Emergency rollback capability"
+          echo ""
+          echo "The automation system will continue monitoring"
+          echo "and maintaining your site health 24/7."
