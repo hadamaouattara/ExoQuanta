@@ -185,7 +185,7 @@ const QuantumCircuitSimulator = () => {
                     <div className="text-center">
                         <div className="text-3xl mb-2">📊</div>
                         <h4 className="font-semibold text-white">Mesure</h4>
-                        <p className="text-sm text-slate-300">Collapse la fonction d'onde</p>
+                        <p className="text-sm text-slate-300">Collapse la fonction d&apos;onde</p>
                     </div>
                 </div>
             </div>
