@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // Configuration optimisée pour Netlify avec cache busting
+    // Configuration pour export statique Netlify
+    output: 'export',
     trailingSlash: true,
     images: {
         unoptimized: true,
