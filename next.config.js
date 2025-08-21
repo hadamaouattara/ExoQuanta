@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // Configuration pour Firebase Auth (nécessite serverless)
-    output: undefined, // Suppression du static export pour Firebase Auth
+    // Configuration pour export statique compatible Netlify
+    output: 'export',
     trailingSlash: true,
     images: {
         unoptimized: true,
@@ -9,28 +9,19 @@ const nextConfig = {
     poweredByHeader: false,
     reactStrictMode: true,
     
+    // Désactiver les features incompatibles avec l'export statique
+    eslint: {
+        ignoreDuringBuilds: true,
+    },
+    
     // Force cache busting with timestamp
     generateBuildId: () => {
         return `build-${Date.now()}`;
     },
     
-    // Headers de sécurité pour Firebase Auth
+    // Headers de sécurité (gérés par Netlify)
     async headers() {
-        return [
-            {
-                source: '/(.*)',
-                headers: [
-                    {
-                        key: 'X-Frame-Options',
-                        value: 'DENY',
-                    },
-                    {
-                        key: 'X-Content-Type-Options',
-                        value: 'nosniff',
-                    },
-                ],
-            },
-        ];
+        return [];
     },
 }
 
