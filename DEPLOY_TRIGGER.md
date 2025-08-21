@@ -1,11 +1,12 @@
-🚀 **FORCE NETLIFY REBUILD - TIMESTAMP: 2025-08-21 06:21:15 UTC**
+# Déclenchement de Déploiement
 
-This commit forces a fresh Netlify deployment after fixing the critters module error.
+Timestamp: 2025-08-21T19:30:00Z
 
-## Recent Fixes Applied:
-✅ Removed experimental `optimizeCss: true` from next.config.js
-✅ Fixed critters module dependency issue  
-✅ Build should now complete successfully
-✅ Site should display Exonov Quantum app (not Netlify template)
+## Changements récents appliqués:
+- ✅ Fix WebSocket localhost:8098 errors
+- ✅ Script de protection en production
+- ✅ Intégration dans layout.jsx
 
-Expected result: https://exoquanta.netlify.app should show the full Exonov Quantum application.
+## Status: READY FOR DEPLOYMENT
+
+Ce fichier déclenche un nouveau déploiement Netlify avec toutes les corrections.
