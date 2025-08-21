@@ -57,7 +57,7 @@ export default function ProtectedRoute({ children, fallback = null }) {
           <h1 className="text-2xl font-bold text-white mb-4">Accès Restreint</h1>
           <p className="text-gray-400 mb-6">Cette zone nécessite une authentification quantique.</p>
           <button
-            onClick={() => router.push(&apos;/&apos;)}
+            onClick={() => router.push('/')}
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-lg transition-all"
           >
             Retour à l&apos;accueil
