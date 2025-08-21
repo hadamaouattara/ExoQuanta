@@ -1,18 +1,18 @@
-/* EXONOV QUANTUM - CSS EMERGENCY OVERRIDE */
-/* This file forces styling when Tailwind fails */
+/* EXONOV QUANTUM - EMERGENCY CSS OVERRIDE */
+/* Forces styling when all other methods fail */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
 }
 
 html, body {
-    font-family: 'Inter', sans-serif;
-    height: 100%;
-    overflow-x: hidden;
+    font-family: 'Inter', sans-serif !important;
+    height: 100% !important;
+    overflow-x: hidden !important;
 }
 
 body {
@@ -21,6 +21,7 @@ body {
     animation: quantumFlow 8s ease-in-out infinite !important;
     color: white !important;
     min-height: 100vh !important;
+    line-height: 1.6 !important;
 }
 
 @keyframes quantumFlow {
@@ -28,79 +29,103 @@ body {
     50% { background-position: 100% 50%; }
 }
 
-/* Force all main containers */
-#__next, [data-nextjs-scroll-focus-boundary] {
+/* Force Next.js containers */
+#__next, [data-nextjs-scroll-focus-boundary], main, div[class*="min-h-screen"] {
     min-height: 100vh !important;
     background: transparent !important;
 }
 
-/* Headers */
+/* Headers - Force quantum colors */
 h1, h2, h3, h4, h5, h6 {
     color: #c084fc !important;
     font-weight: bold !important;
+    margin-bottom: 1rem !important;
 }
 
 h1 { font-size: 3rem !important; }
 h2 { font-size: 2.5rem !important; }
+h3 { font-size: 1.875rem !important; }
 
-/* Navigation */
-nav {
-    background: rgba(0, 0, 0, 0.5) !important;
-    backdrop-filter: blur(10px) !important;
-    border-bottom: 1px solid rgba(168, 85, 247, 0.3) !important;
-    padding: 1rem !important;
+/* Force all paragraphs to be visible */
+p, span, div {
+    color: #e9d5ff !important;
 }
 
-/* Cards */
+/* Navigation bar styling */
+nav, header {
+    background: rgba(0, 0, 0, 0.7) !important;
+    backdrop-filter: blur(15px) !important;
+    border-bottom: 1px solid rgba(168, 85, 247, 0.3) !important;
+    padding: 1rem !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 50 !important;
+}
+
+/* Force all card-like elements */
 .quantum-card, 
 [class*="bg-black"], 
-[class*="backdrop-blur"] {
+[class*="backdrop-blur"],
+div[class*="border"],
+section > div > div {
     background: rgba(0, 0, 0, 0.4) !important;
     backdrop-filter: blur(15px) !important;
     border: 1px solid rgba(168, 85, 247, 0.4) !important;
     border-radius: 1rem !important;
     padding: 1.5rem !important;
+    margin: 1rem 0 !important;
     transition: all 0.3s ease !important;
 }
 
-.quantum-card:hover {
+.quantum-card:hover, 
+div[class*="border"]:hover {
     transform: translateY(-5px) !important;
     box-shadow: 0 20px 40px rgba(124, 58, 237, 0.3) !important;
     border-color: rgba(168, 85, 247, 0.7) !important;
 }
 
-/* Buttons */
-button, .btn, a[class*="btn"] {
+/* Force all buttons */
+button, 
+.btn, 
+a[class*="btn"],
+a[href*="dashboard"],
+a[href*="simulation"] {
     background: linear-gradient(135deg, #7c3aed, #a855f7) !important;
     color: white !important;
     border: 1px solid rgba(168, 85, 247, 0.5) !important;
-    border-radius: 0.5rem !important;
-    padding: 0.75rem 1.5rem !important;
+    border-radius: 0.75rem !important;
+    padding: 0.875rem 1.5rem !important;
     font-weight: 600 !important;
     cursor: pointer !important;
     transition: all 0.3s ease !important;
     text-decoration: none !important;
-    display: inline-block !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     margin: 0.5rem !important;
+    font-size: 0.875rem !important;
 }
 
-button:hover, .btn:hover {
+button:hover, 
+.btn:hover,
+a[class*="btn"]:hover {
     transform: translateY(-2px) !important;
     box-shadow: 0 15px 30px rgba(124, 58, 237, 0.4) !important;
     background: linear-gradient(135deg, #8b5cf6, #c084fc) !important;
 }
 
-/* Links */
+/* Force all links */
 a {
     color: #c084fc !important;
     text-decoration: none !important;
+    transition: color 0.3s ease !important;
 }
 
 a:hover {
     color: #e9d5ff !important;
 }
 
-/* Layout */
+/* Layout utilities */
 .container {
     max-width: 1200px !important;
     margin: 0 auto !important;
@@ -110,6 +135,7 @@ a:hover {
 .grid {
     display: grid !important;
     gap: 2rem !important;
+    grid-template-columns: 1fr !important;
 }
 
 @media (min-width: 768px) {
@@ -124,44 +150,7 @@ a:hover {
     }
 }
 
-/* Text colors */
-.text-purple-200, .text-purple-300 {
-    color: #d8b4fe !important;
-}
-
-.text-cyan-400 {
-    color: #22d3ee !important;
-}
-
-.text-green-400 {
-    color: #4ade80 !important;
-}
-
-/* Spacing */
-.mb-4 { margin-bottom: 1rem !important; }
-.mb-6 { margin-bottom: 1.5rem !important; }
-.mb-8 { margin-bottom: 2rem !important; }
-.mb-12 { margin-bottom: 3rem !important; }
-
-.py-4 { padding: 1rem 0 !important; }
-.py-8 { padding: 2rem 0 !important; }
-.py-12 { padding: 3rem 0 !important; }
-.py-16 { padding: 4rem 0 !important; }
-.py-20 { padding: 5rem 0 !important; }
-
-.px-6 { padding: 0 1.5rem !important; }
-
-/* Center alignment */
-.text-center {
-    text-align: center !important;
-}
-
-.mx-auto {
-    margin-left: auto !important;
-    margin-right: auto !important;
-}
-
-/* Flexbox */
+/* Force flexbox layouts */
 .flex {
     display: flex !important;
 }
@@ -178,50 +167,73 @@ a:hover {
     justify-content: space-between !important;
 }
 
-.gap-6 {
-    gap: 1.5rem !important;
+.text-center {
+    text-align: center !important;
 }
 
-.gap-8 {
-    gap: 2rem !important;
+.mx-auto {
+    margin-left: auto !important;
+    margin-right: auto !important;
 }
 
-/* Responsive text */
-@media (max-width: 768px) {
-    h1 { font-size: 2rem !important; }
-    h2 { font-size: 1.75rem !important; }
-    
-    .grid {
-        grid-template-columns: 1fr !important;
-    }
+/* Force spacing */
+.mb-4 { margin-bottom: 1rem !important; }
+.mb-6 { margin-bottom: 1.5rem !important; }
+.mb-8 { margin-bottom: 2rem !important; }
+.mb-12 { margin-bottom: 3rem !important; }
+.mb-16 { margin-bottom: 4rem !important; }
+
+.py-4 { padding: 1rem 0 !important; }
+.py-8 { padding: 2rem 0 !important; }
+.py-12 { padding: 3rem 0 !important; }
+.py-16 { padding: 4rem 0 !important; }
+.py-20 { padding: 5rem 0 !important; }
+
+.px-6 { padding: 0 1.5rem !important; }
+
+.gap-6 { gap: 1.5rem !important; }
+.gap-8 { gap: 2rem !important; }
+
+/* Force specific text colors */
+.text-purple-200, .text-purple-300 {
+    color: #d8b4fe !important;
 }
 
-/* Force quantum background particles */
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: 
-        radial-gradient(circle at 20% 20%, rgba(147,51,234,0.15), transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(139,92,246,0.15), transparent 50%),
-        radial-gradient(circle at 50% 50%, rgba(168,85,247,0.1), transparent 60%);
-    pointer-events: none;
-    z-index: -1;
-    animation: particleFloat 10s ease-in-out infinite;
+.text-cyan-400 {
+    color: #22d3ee !important;
 }
 
-@keyframes particleFloat {
-    0%, 100% { opacity: 0.6; transform: scale(1); }
-    50% { opacity: 0.9; transform: scale(1.05); }
+.text-green-400, .text-green-300 {
+    color: #4ade80 !important;
 }
 
-/* Success banner */
-.deploy-banner {
+.text-blue-400, .text-blue-300 {
+    color: #60a5fa !important;
+}
+
+.text-orange-400, .text-orange-300 {
+    color: #fb923c !important;
+}
+
+/* Force sections */
+section {
+    padding: 3rem 1.5rem !important;
+    position: relative !important;
+}
+
+/* Force footer */
+footer {
+    background: rgba(0, 0, 0, 0.7) !important;
+    backdrop-filter: blur(10px) !important;
+    border-top: 1px solid rgba(168, 85, 247, 0.3) !important;
+    padding: 3rem 1.5rem !important;
+    margin-top: 4rem !important;
+}
+
+/* Success banner - ALWAYS visible */
+.fixed[class*="top-"] {
     position: fixed !important;
-    top: 1rem !important;
+    top: 5rem !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     background: linear-gradient(135deg, #22c55e, #06b6d4) !important;
@@ -239,11 +251,69 @@ body::before {
     60% { transform: translateX(-50%) translateY(-5px); }
 }
 
-/* Fix footer */
-footer {
-    background: rgba(0, 0, 0, 0.7) !important;
-    backdrop-filter: blur(10px) !important;
-    border-top: 1px solid rgba(168, 85, 247, 0.3) !important;
-    padding: 3rem 1.5rem !important;
-    margin-top: 4rem !important;
+/* Force quantum background particles */
+body::before {
+    content: '' !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: 
+        radial-gradient(circle at 20% 20%, rgba(147,51,234,0.15), transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(139,92,246,0.15), transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(168,85,247,0.1), transparent 60%) !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+    animation: particleFloat 10s ease-in-out infinite !important;
+}
+
+@keyframes particleFloat {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 0.9; transform: scale(1.05); }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    h1 { font-size: 2.5rem !important; }
+    h2 { font-size: 2rem !important; }
+    
+    .grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+    
+    section {
+        padding: 2rem 1rem !important;
+    }
+    
+    .container {
+        padding: 0 1rem !important;
+    }
+}
+
+/* Force visibility for specific elements that might be hidden */
+div[class*="EXONOV"], 
+div[class*="QUANTUM"],
+h1, h2, h3, p,
+button, a, span {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: block !important;
+}
+
+button, a[class*="btn"] {
+    display: inline-flex !important;
+}
+
+/* Emergency override for completely broken styling */
+body * {
+    color: inherit !important;
+}
+
+/* Ensure main content is always visible */
+main, [role="main"] {
+    position: relative !important;
+    z-index: 1 !important;
+    min-height: 80vh !important;
 }
