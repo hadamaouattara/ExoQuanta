@@ -98,13 +98,14 @@ a {
 
 /* Button styles */
 .btn {
-  @apply inline-flex items-center justify-center gap-2 font-bold text-center no-underline transition-all duration-300 cursor-pointer;
+  @apply inline-flex items-center justify-center font-bold text-center no-underline transition-all duration-300 cursor-pointer;
   padding: 0.875rem 1.25rem;
   font-size: 0.875rem;
   border-radius: 0.5rem;
   background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
   color: white;
   border: none;
+  gap: 0.5rem; /* Equivalent to gap-2 */
 }
 
 .btn:hover {
@@ -152,6 +153,19 @@ a {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Common utilities that might be missing */
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+.gap-6 {
+  gap: 1.5rem;
 }
 
 /* Responsive design */
