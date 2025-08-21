@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // Configuration pour export statique compatible Netlify
-    output: 'export',
+    // Configuration serverless pour Netlify avec Firebase Auth
+    output: undefined, // Retour au mode serverless
     trailingSlash: true,
     images: {
         unoptimized: true,
@@ -9,29 +9,28 @@ const nextConfig = {
     poweredByHeader: false,
     reactStrictMode: true,
     
-    // Désactiver les features incompatibles avec l'export statique
-    eslint: {
-        ignoreDuringBuilds: true,
-    },
-    
     // Force cache busting with timestamp
     generateBuildId: () => {
         return `build-${Date.now()}`;
     },
     
-    // Configuration pour générer toutes les pages statiques
-    generateStaticParams: async () => {
-        return [
-            { slug: [''] },
-            { slug: ['dashboard'] },
-            { slug: ['simulation'] },
-            { slug: ['documentation'] }
-        ];
-    },
-    
-    // Headers de sécurité (gérés par Netlify)
+    // Headers de sécurité pour Firebase Auth
     async headers() {
-        return [];
+        return [
+            {
+                source: '/(.*)',
+                headers: [
+                    {
+                        key: 'X-Frame-Options',
+                        value: 'DENY',
+                    },
+                    {
+                        key: 'X-Content-Type-Options',
+                        value: 'nosniff',
+                    },
+                ],
+            },
+        ];
     },
 }
 
