@@ -18,15 +18,24 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
-# Redirects for SPA behavior
+# Redirects for SPA behavior - correct syntax for static export
+[[redirects]]
+  from = "/dashboard"
+  to = "/dashboard/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/simulation"
+  to = "/simulation/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/documentation"
+  to = "/documentation/index.html"
+  status = 200
+
+# Fallback redirect for any unmatched routes
 [[redirects]]
   from = "/*"
   to = "/index.html"
-  status = 200
-  conditions = {Role = ["admin","editor"]}
-
-# API Routes handling
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
   status = 200
