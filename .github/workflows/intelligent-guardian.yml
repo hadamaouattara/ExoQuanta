@@ -1,0 +1,228 @@
+name: "Intelligent Deployment Guardian"
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '*/10 * * * *'  # Every 10 minutes
+  workflow_dispatch:
+
+env:
+  SITE_URL: "https://quantum.exonovnow.com"
+
+jobs:
+  comprehensive-health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Multi-layer health assessment
+        id: health_check
+        run: |
+          echo "Starting comprehensive health assessment..."
+          
+          # 1. Basic connectivity
+          if curl -s --head "$SITE_URL" | grep -q "200 OK"; then
+            echo "✅ Site is accessible"
+            echo "connectivity=pass" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Site connectivity failed"
+            echo "connectivity=fail" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          # 2. Check for CSS loading
+          response=$(curl -s "$SITE_URL")
+          if echo "$response" | grep -q "bg-gradient\|purple\|quantum"; then
+            echo "✅ CSS appears to be loading"
+            echo "css_loading=pass" >> $GITHUB_OUTPUT
+          else
+            echo "❌ CSS not loading properly"
+            echo "css_loading=fail" >> $GITHUB_OUTPUT
+          fi
+          
+          # 3. Check for JavaScript errors in console
+          if echo "$response" | grep -q "error\|Error\|ERROR"; then
+            echo "⚠️ Potential JavaScript errors detected"
+            echo "js_errors=warning" >> $GITHUB_OUTPUT
+          else
+            echo "✅ No obvious JavaScript errors"
+            echo "js_errors=pass" >> $GITHUB_OUTPUT
+          fi
+          
+          # 4. Check critical UI elements
+          if echo "$response" | grep -q "EXONOV.*QUANTUM"; then
+            echo "✅ Main branding visible"
+            echo "branding=pass" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Main branding missing"
+            echo "branding=fail" >> $GITHUB_OUTPUT
+          fi
+          
+          # 5. Firebase auth check
+          if echo "$response" | grep -q "firebase\|auth"; then
+            echo "✅ Firebase authentication detected"
+            echo "auth=pass" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Firebase authentication unclear"
+            echo "auth=warning" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Performance assessment
+        id: performance
+        run: |
+          echo "Checking site performance..."
+          
+          # Measure load time
+          load_time=$(curl -o /dev/null -s -w "%{time_total}" "$SITE_URL")
+          echo "Load time: ${load_time}s"
+          
+          if (( $(echo "$load_time < 3.0" | bc -l) )); then
+            echo "✅ Load time acceptable: ${load_time}s"
+            echo "load_time=pass" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Slow load time: ${load_time}s"
+            echo "load_time=warning" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Security check
+        run: |
+          echo "Running security checks..."
+          
+          # Check for HTTPS
+          if curl -s --head "$SITE_URL" | grep -q "https"; then
+            echo "✅ HTTPS enabled"
+          fi
+          
+          # Check security headers
+          headers=$(curl -s -I "$SITE_URL")
+          if echo "$headers" | grep -q "X-Frame-Options\|X-Content-Type-Options"; then
+            echo "✅ Security headers present"
+          else
+            echo "⚠️ Some security headers missing"
+          fi
+          
+      - name: Generate health score
+        id: score
+        run: |
+          score=100
+          
+          # Deduct points for failures
+          if [ "${{ steps.health_check.outputs.connectivity }}" = "fail" ]; then
+            score=$((score - 50))
+          fi
+          if [ "${{ steps.health_check.outputs.css_loading }}" = "fail" ]; then
+            score=$((score - 30))
+          fi
+          if [ "${{ steps.health_check.outputs.branding }}" = "fail" ]; then
+            score=$((score - 20))
+          fi
+          if [ "${{ steps.health_check.outputs.js_errors }}" = "warning" ]; then
+            score=$((score - 10))
+          fi
+          if [ "${{ steps.health_check.outputs.auth }}" = "warning" ]; then
+            score=$((score - 5))
+          fi
+          if [ "${{ steps.performance.outputs.load_time }}" = "warning" ]; then
+            score=$((score - 5))
+          fi
+          
+          echo "Overall health score: $score/100"
+          echo "score=$score" >> $GITHUB_OUTPUT
+          
+          if [ $score -lt 70 ]; then
+            echo "❌ Site health critical - triggering automatic repair"
+            echo "status=critical" >> $GITHUB_OUTPUT
+          elif [ $score -lt 85 ]; then
+            echo "⚠️ Site health degraded - monitoring closely"
+            echo "status=degraded" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Site health excellent"
+            echo "status=healthy" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Trigger auto-repair if needed
+        if: steps.score.outputs.status == 'critical'
+        run: |
+          echo "Triggering emergency auto-repair..."
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/dispatches \
+            -d '{"event_type":"css-repair-needed"}'
+            
+      - name: Update status badge
+        run: |
+          score=${{ steps.score.outputs.score }}
+          status=${{ steps.score.outputs.status }}
+          
+          if [ "$status" = "healthy" ]; then
+            color="brightgreen"
+            message="Healthy ($score%)"
+          elif [ "$status" = "degraded" ]; then
+            color="yellow" 
+            message="Degraded ($score%)"
+          else
+            color="red"
+            message="Critical ($score%)"
+          fi
+          
+          echo "Site Health: $message" > .github/site-health-badge.txt
+          
+      - name: Store health metrics
+        run: |
+          mkdir -p .github/health-metrics
+          echo "{
+            \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+            \"score\": ${{ steps.score.outputs.score }},
+            \"status\": \"${{ steps.score.outputs.status }}\",
+            \"connectivity\": \"${{ steps.health_check.outputs.connectivity }}\",
+            \"css_loading\": \"${{ steps.health_check.outputs.css_loading }}\",
+            \"branding\": \"${{ steps.health_check.outputs.branding }}\",
+            \"auth\": \"${{ steps.health_check.outputs.auth }}\",
+            \"load_time\": \"${{ steps.performance.outputs.load_time }}\"
+          }" > .github/health-metrics/$(date -u +%Y%m%d_%H%M%S).json
+          
+      - name: Commit health metrics
+        run: |
+          git config --local user.email "health-monitor@github.com"
+          git config --local user.name "Site Health Monitor"
+          
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .github/
+            git commit -m "📊 Health metrics update: ${{ steps.score.outputs.status }} (${{ steps.score.outputs.score }}%)"
+            git push
+          fi
+
+  automated-rollback:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'repository_dispatch' && github.event.action == 'emergency-rollback'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 10
+          
+      - name: Find last healthy commit
+        id: healthy_commit
+        run: |
+          # Look for last commit with successful health check
+          for commit in $(git log --oneline -10 --format="%H"); do
+            if git log --oneline -1 $commit | grep -q "Health.*healthy\|Success\|✅"; then
+              echo "Found healthy commit: $commit"
+              echo "commit=$commit" >> $GITHUB_OUTPUT
+              break
+            fi
+          done
+          
+      - name: Emergency rollback
+        run: |
+          healthy_commit=${{ steps.healthy_commit.outputs.commit }}
+          if [ -n "$healthy_commit" ]; then
+            echo "Rolling back to healthy commit: $healthy_commit"
+            git reset --hard $healthy_commit
+            git push --force-with-lease
+            echo "🚨 Emergency rollback completed"
+          else
+            echo "No healthy commit found in recent history"
+            exit 1
+          fi
