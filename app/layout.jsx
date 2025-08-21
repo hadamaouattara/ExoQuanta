@@ -1,6 +1,7 @@
 import '../styles/globals.css';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { AuthProvider } from '@/contexts/AuthContext';
+import Script from 'next/script';
 
 const inter = Inter({
     subsets: ['latin'],
@@ -48,6 +49,12 @@ export default function RootLayout({ children }) {
         <html lang="fr" className={`${inter.variable} ${jetbrainsMono.variable}`}>
             <head>
                 <link rel="icon" href="/quantum-favicon.svg" sizes="any" />
+                {/* Fix pour les erreurs WebSocket en production */}
+                <Script
+                    src="/websocket-fix.js"
+                    strategy="beforeInteractive"
+                    id="websocket-fix"
+                />
             </head>
             <body className="antialiased text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-inter">
                 <AuthProvider>
