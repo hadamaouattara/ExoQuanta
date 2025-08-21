@@ -19,6 +19,16 @@ const nextConfig = {
         return `build-${Date.now()}`;
     },
     
+    // Configuration pour générer toutes les pages statiques
+    generateStaticParams: async () => {
+        return [
+            { slug: [''] },
+            { slug: ['dashboard'] },
+            { slug: ['simulation'] },
+            { slug: ['documentation'] }
+        ];
+    },
+    
     // Headers de sécurité (gérés par Netlify)
     async headers() {
         return [];
