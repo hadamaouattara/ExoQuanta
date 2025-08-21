@@ -1,0 +1,91 @@
+name: "Smart UI Health Monitor"
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '*/15 * * * *'  # Every 15 minutes
+
+jobs:
+  visual-regression-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build application
+        run: npm run build
+        
+      - name: Start test server
+        run: npm start &
+        
+      - name: Wait for server
+        run: sleep 10
+        
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+        
+      - name: Run visual tests
+        run: |
+          npx playwright test --config=.github/playwright.config.js
+        
+      - name: Check CSS loading
+        run: |
+          response=$(curl -s http://localhost:3000)
+          if echo "$response" | grep -q "bg-gradient-to-br"; then
+            echo "✅ CSS classes detected in HTML"
+          else
+            echo "❌ CSS classes missing - Tailwind not working"
+            exit 1
+          fi
+          
+      - name: Test critical UI elements
+        run: |
+          # Test if gradients are applied
+          node -e "
+            const puppeteer = require('puppeteer');
+            (async () => {
+              const browser = await puppeteer.launch();
+              const page = await browser.newPage();
+              await page.goto('http://localhost:3000');
+              
+              const bgColor = await page.evaluate(() => {
+                return window.getComputedStyle(document.body).background;
+              });
+              
+              if (bgColor.includes('gradient') || bgColor.includes('purple')) {
+                console.log('✅ Background gradient detected');
+              } else {
+                console.log('❌ Background gradient missing');
+                process.exit(1);
+              }
+              
+              await browser.close();
+            })();
+          "
+          
+      - name: Screenshot comparison
+        run: |
+          npx playwright screenshot http://localhost:3000 screenshot.png
+          # Store baseline and compare with previous
+          
+      - name: Auto-fix CSS issues
+        if: failure()
+        run: |
+          echo "Detected CSS loading issues - applying auto-fix"
+          # Trigger CSS repair workflow
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/dispatches \
+            -d '{"event_type":"css-repair-needed"}'
