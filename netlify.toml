@@ -1,14 +1,10 @@
 [build]
-  publish = ".next"
+  publish = "out"
   command = "npm run build"
 
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
   NODE_VERSION = "22"
-
-# Next.js serverless mode avec plugin Netlify
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
 
 # Headers pour Firebase Auth
 [[headers]]
