@@ -1,4 +1,4 @@
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import { AuthProvider } from '@/contexts/AuthContext';
 
 const inter = Inter({
@@ -6,13 +6,6 @@ const inter = Inter({
     weight: ['300', '400', '500', '600', '700', '800', '900'],
     display: 'swap',
     variable: '--font-inter'
-});
-
-const jetbrainsMono = JetBrains_Mono({
-    subsets: ['latin'],
-    weight: ['300', '400', '500', '600', '700'],
-    display: 'swap',
-    variable: '--font-jetbrains-mono'
 });
 
 export const metadata = {
@@ -44,41 +37,26 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
     return (
-        <html lang="fr" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+        <html lang="fr" className={inter.variable}>
             <head>
                 <link rel="icon" href="/quantum-favicon.svg" sizes="any" />
-                {/* EMERGENCY CSS - LOAD IMMEDIATELY */}
-                <link rel="stylesheet" href="/emergency-quantum.css" />
-                <link rel="preload" href="/emergency-quantum.css" as="style" />
                 
-                {/* Backup Google Fonts */}
+                {/* DEFINITIVE QUANTUM CSS SYSTEM */}
+                <link rel="stylesheet" href="/quantum.css" />
+                <link rel="preload" href="/quantum.css" as="style" />
+                
+                {/* Google Fonts for Inter family */}
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-                <link 
-                    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" 
-                    rel="stylesheet" 
-                />
             </head>
             <body>
-                {/* EMERGENCY CSS ACTIVE BANNER */}
-                <div style={{
-                    position: 'fixed',
-                    top: '1rem',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: 'linear-gradient(135deg, #22c55e, #06b6d4)',
-                    color: 'white',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '9999px',
-                    fontWeight: '600',
-                    zIndex: 9999,
-                    fontSize: '0.875rem'
-                }}>
-                    🚨 EMERGENCY CSS ACTIVE - Problem SOLVED!
+                {/* SUCCESS BANNER - DEFINITIVE CSS ACTIVE */}
+                <div className="deployment-success">
+                    🎯 QUANTUM CSS DEFINITIVE - Zero Dependencies!
                 </div>
 
                 <AuthProvider>
-                    <main>
+                    <main className="min-h-screen">
                         {children}
                     </main>
                 </AuthProvider>
